@@ -5,6 +5,7 @@ usage:
 
 options:
   --project=<project>         Google Cloud Project Name [default: andersen-lab]
+  --kind=<kind>               Datastore kind [default: fastq]
   -h --help                   Show this screen.
   --version                   Show version.
 
@@ -15,9 +16,9 @@ from gcloud import datastore
 import hashlib
 import io
 import os
-from clint.textui import colored, puts, progress
+from clint.textui import colored, puts, progress, indent
 from fq_util import fastq_reader
-
+import os.path
 
 def get_item(kind, name):
     return ds.get(ds.key(kind, name))
@@ -89,12 +90,20 @@ def main():
         fq_set = glob.glob(args["<fq>"])
     else:
         fq_set = args["<fq>"]
+        fq_set_exists = map(os.path.isfile, fq_set)
+        if not all(fq_set_exists):
+            missing_files = [f for f,exists in zip(fq_set, fq_set_exists) if exists is False]
+            with indent(4):
+                puts(colored.red("\nFile not found:\n\n" + \
+                                 "\n".join(missing_files) + "\n"))
+                exit()
     global ds
     ds = datastore.Client(project=args['--project'])
-    for fastq in args['<fq>']:
+
+    for fastq in fq_set:
         puts(colored.blue(fastq))
         hash = md5sum(fastq).hexdigest()
-        nfq = get_item("fastq", hash)
+        nfq = get_item(args["--kind"], hash)
         kwdata = {}
         # Test if fq stats generated.
         if nfq is None or u"Total_Reads" not in nfq.keys():
@@ -102,8 +111,13 @@ def main():
             kwdata["fastq_stats"] = True
             kwdata.update(fq.header)
             kwdata.update(fq.calculate_fastq_stats())
-        path_filename=os.path.abspath(fastq)
-        update_item("fastq", hash, filename=[unicode(fastq)], path_filename=[unicode(path_filename)], **kwdata)
+
+        path_filename = os.path.abspath(fastq)
+        update_item("fastq",
+                    hash,
+                    filename=[unicode(fastq)],
+                    path_filename=[unicode(path_filename)],
+                    **kwdata)
 
 
 if __name__ == '__main__':
