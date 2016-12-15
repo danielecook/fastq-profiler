@@ -115,7 +115,6 @@ def main():
         kwdata = {}
         # Test if fq stats generated.
         if nfq is None or u"Total_Reads" not in nfq.keys():
-            kwdata["fastq_stats"] = True
             kwdata.update(fq.header)
             kwdata.update(fq.calculate_fastq_stats())
 
