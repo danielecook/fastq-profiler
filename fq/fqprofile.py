@@ -19,6 +19,7 @@ import os
 from clint.textui import colored, puts, progress, indent
 from fq_util import fastq_reader
 import os.path
+from datetime import datetime
 
 def get_item(kind, name):
     return ds.get(ds.key(kind, name))
@@ -27,7 +28,7 @@ def get_item(kind, name):
 def update_item(kind, name, **kwargs):
     m = get_item(kind, name)
     if m is None:
-        m = datastore.Entity(key=ds.key(kind, name))
+        m = datastore.Entity(key=ds.key(kind, name), exclude_from_indexes = ['Most_Abundant_Sequence'])
     for key, value in kwargs.items():
         if type(value) == str:
             m[key] = unicode(value)
@@ -56,11 +57,6 @@ def store_item(kind, name, **kwargs):
     ds.put(m)
 
 
-def getSize(filename):
-    st = os.stat(filename)
-    return st.st_size
-
-
 def query_item(kind, filters):
     # filters:
     # [("var_name", "=", 1)]
@@ -74,13 +70,21 @@ def md5sum(src, length=io.DEFAULT_BUFFER_SIZE):
     calculated = 0
     md5 = hashlib.md5()
     with io.open(src, mode="rb") as fd:
-        filesize = getSize(src)
+        filesize = os.stat(src).st_size
         expected_size = (filesize / io.DEFAULT_BUFFER_SIZE) + 1
         for chunk in progress.bar(iter(lambda: fd.read(length), b''),
                                   expected_size=expected_size):
             md5.update(chunk)
             calculated += len(chunk)
     return md5
+
+
+# Stack Overflow: 1094841
+from math import log
+_suffixes = ['bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+def file_size(size):
+    order = int(log(float(size), 2) / 10) if size else 0
+    return '{:.4g} {}'.format(size / (1 << (order * 10)), _suffixes[order])
 
 
 def main():
@@ -108,15 +112,20 @@ def main():
         if fq.error is True:
             error_fqs.append(fastq)
             with indent(4):
-                puts(colored.red("\nDoes not appear to be a Fastq:" + fastq + "\n"))
+                puts(colored.red("\nDoes not appear to be a Fastq: " + fastq + "\n"))
             continue
         hash = md5sum(fastq).hexdigest()
         nfq = get_item(args["--kind"], hash)
         kwdata = {}
         # Test if fq stats generated.
-        if nfq is None or u"Total_Reads" not in nfq.keys():
+        if nfq is None or u"total_reads" not in nfq.keys():
             kwdata.update(fq.header)
             kwdata.update(fq.calculate_fastq_stats())
+        file_stat = os.stat(fastq)
+        kwdata['filesize'] = file_stat.st_size
+        kwdata['hfilesize'] = file_size(file_stat.st_size)
+        date_created = file_stat.st_ctime
+        kwdata['date_created'] = datetime.fromtimestamp(date_created)
 
         path_filename = os.path.abspath(fastq)
         update_item("fastq",

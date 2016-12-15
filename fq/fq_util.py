@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from subprocess import Popen, PIPE
+import mimetypes
 import gzip
 import re
 from itertools import groupby as g
@@ -24,14 +25,16 @@ illumina_header = ["instrument",
                    "control_bits",
                    "barcode"]  # barcode/index sequence; fetched later.
 
+pacbio_header = [""]
+
 SRR_header = ['SRR']
 
-stat_header = ["Total_Reads",
-         "Unique_Reads",
-         "Percent_Unique", 
-         "Most_Abundant_Sequence",
-         "Most_Abundant_Frequency",
-         "Percentage_Unique_fq"]
+stat_header = ["total_reads",
+         "unique_reads",
+         "percent_unique", 
+         "most_abundant_sequence",
+         "most_abundant_frequency",
+         "most_abundant_frequency_percent"]
 
 
 def parse_filename(filename):
@@ -67,18 +70,28 @@ class fastq_reader:
         # Get fastq information
         try:
             header_lines = [x["info"] for x in self.read(1)]
-            header = re.split(r'(\:|#|/| )',header_lines[0])[::2]
+            header_line = header_lines[0]
+            if header_line.count(":") > 3:
+                header = re.split(r'(\:|#|/| )',header_lines[0])[::2]
+                self.sequencing = "Illumina"
+            elif re.match(r'^@.*\/[0-9]+\/[0-9]+_[0-9]+', header_line):
+                header = re.split(r'(\:|#|/| )',header_lines[0])[::2]
+                self.sequencing = "PacBio"
             fetch_barcode = True
 
-            if len(header) == 11:
+            if len(header) == 11 and self.sequencing == "Illumina":
                 # Use new header format.
                 use_header = illumina_header
-            elif len(header) == 6:
+            elif len(header) == 6  and self.sequencing == "Illumina":
                 # Use old header format.
-                use_header = legacy_illumina_header
-            elif len(header) == 7:
+                header_type = "legacy_illumina_header"
+            elif len(header) == 7  and self.sequencing == "Illumina":
                 # Use old header and add pair if available.
                 use_header = legacy_illumina_header + ["pair"]
+            elif self.sequencing == "PacBio":
+                use_header = ["movie_name"]
+                header = header_line.split("/")[0:1]
+                fetch_barcode = False
             elif header[0].startswith("@SRR"):
                 # Setup SRR Header
                 header = header[0].split(".")[0:1]
@@ -130,7 +143,7 @@ class fastq_reader:
                     break
 
     def calculate_fastq_stats(self):
-        if self.filename.endswith(".fq"):
+        if mimetypes.guess_type(self.filename)[1] is None:
             # Read if not zipped.
             awk_read = "cat"
         else:
@@ -184,9 +197,9 @@ class fastq_reader:
         d["G_count"] = G
         d["N_count"] = N 
         d["bases"] = A + T + C + G
-        d["GC_count"] = (G + C) / float(cum_length)
+        d["GC_content"] = (G + C) / float(cum_length)
         d["min_length"] = min_length
-        d["avg_length"] = cum_length / float(d["Total_Reads"])
+        d["avg_length"] = cum_length / float(d["total_reads"])
         d["max_length"] = max_length
         return d
 
