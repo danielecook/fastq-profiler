@@ -1,17 +1,21 @@
 from setuptools import setup
 import glob
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
 
-setup(name='cli-name',
+setup(name='fastq-profiler',
       version='0.0.1',
-      packages=['cli'],
-      description='Skeleton commandline python project',
+      packages=['fq'],
+      description='Calculate statistics on fastqs and store in Google Datastore',
       url='https://github.com/danielecook/python-cli-skeleton',
       author='Daniel Cook',
       author_email='danielecook@gmail.com',
       license='MIT',
+      install_requires=required,
       entry_points="""
       [console_scripts]
-      cli = cli.cli:main
+      fqprofile = fq.fqprofile:main
       """,
       install_requires=["docopt", "clint"],
       zip_safe=False)
+
