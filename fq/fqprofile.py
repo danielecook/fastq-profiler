@@ -97,17 +97,24 @@ def main():
                 puts(colored.red("\nFile not found:\n\n" + \
                                  "\n".join(missing_files) + "\n"))
                 exit()
+
+
     global ds
     ds = datastore.Client(project=args['--project'])
-
+    error_fqs = []
     for fastq in fq_set:
         puts(colored.blue(fastq))
+        fq = fastq_reader(fastq)
+        if fq.error is True:
+            error_fqs.append(fastq)
+            with indent(4):
+                puts(colored.red("\nDoes not appear to be a Fastq:" + fastq + "\n"))
+            continue
         hash = md5sum(fastq).hexdigest()
         nfq = get_item(args["--kind"], hash)
         kwdata = {}
         # Test if fq stats generated.
         if nfq is None or u"Total_Reads" not in nfq.keys():
-            fq = fastq_reader(fastq)
             kwdata["fastq_stats"] = True
             kwdata.update(fq.header)
             kwdata.update(fq.calculate_fastq_stats())
@@ -118,6 +125,10 @@ def main():
                     filename=[unicode(fastq)],
                     path_filename=[unicode(path_filename)],
                     **kwdata)
+    
+    if error_fqs and len(fq_set) > 1:
+        with indent(4):
+            puts(colored.red("\nFastqs that errored:\n\n" + '\n'.join(error_fqs) + "\n"))
 
 
 if __name__ == '__main__':

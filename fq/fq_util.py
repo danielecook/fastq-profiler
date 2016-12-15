@@ -65,43 +65,47 @@ class fastq_reader:
     def __init__(self, filename):
         self.filename = filename
         # Get fastq information
-        header_lines = [x["info"] for x in self.read(1)]
-        header = re.split(r'(\:|#|/| )',header_lines[0])[::2]
-        fetch_barcode = True
+        try:
+            header_lines = [x["info"] for x in self.read(1)]
+            header = re.split(r'(\:|#|/| )',header_lines[0])[::2]
+            fetch_barcode = True
 
-        if len(header) == 11:
-            # Use new header format.
-            use_header = illumina_header
-        elif len(header) == 6:
-            # Use old header format.
-            use_header = legacy_illumina_header
-        elif len(header) == 7:
-            # Use old header and add pair if available.
-            use_header = legacy_illumina_header + ["pair"]
-        elif header[0].startswith("@SRR"):
-            # Setup SRR Header
-            header = header[0].split(".")[0:1]
-            use_header = SRR_header
-            fetch_barcode = False
-        else:
-            # If unknown header, enumerate
-            use_header = ["h" + str(x) for x in range(0,len(header))]
-            fetch_barcode = False
+            if len(header) == 11:
+                # Use new header format.
+                use_header = illumina_header
+            elif len(header) == 6:
+                # Use old header format.
+                use_header = legacy_illumina_header
+            elif len(header) == 7:
+                # Use old header and add pair if available.
+                use_header = legacy_illumina_header + ["pair"]
+            elif header[0].startswith("@SRR"):
+                # Setup SRR Header
+                header = header[0].split(".")[0:1]
+                use_header = SRR_header
+                fetch_barcode = False
+            else:
+                # If unknown header, enumerate
+                use_header = ["h" + str(x) for x in range(0,len(header))]
+                fetch_barcode = False
 
-        if fetch_barcode == True:
-            # Fetch index
-            index_loc = use_header.index("barcode")
-            fetch_index = [re.split(r'(\:|#|/| )',x["info"])[::2][index_loc] for x in self.read(1000)]
-            self.barcode = most_common(fetch_index)
+            if fetch_barcode == True:
+                # Fetch index
+                index_loc = use_header.index("barcode")
+                fetch_index = [re.split(r'(\:|#|/| )',x["info"])[::2][index_loc] for x in self.read(1000)]
+                self.barcode = most_common(fetch_index)
 
 
-        self.header = {}
-        # Set remaining attributes.
-        for attr, val in zip(use_header, header):
-            if attr is not None:
-                val = autoconvert(val) # Set variable type
-                self.header[attr] = val
-                setattr(self, attr, val)
+            self.header = {}
+            # Set remaining attributes.
+            for attr, val in zip(use_header, header):
+                if attr is not None:
+                    val = autoconvert(val) # Set variable type
+                    self.header[attr] = val
+                    setattr(self, attr, val)
+            self.error = False
+        except:
+            self.error = True
 
 
     def read(self, n=-1):
