@@ -16,6 +16,5 @@ setup(name='fastq-profiler',
       [console_scripts]
       fqprofile = fq.fqprofile:main
       """,
-      install_requires=["docopt", "clint"],
       zip_safe=False)
 
