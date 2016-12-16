@@ -94,7 +94,7 @@ def main():
     if "*" in args["<fq>"] and len(args) == 1:
         fq_set = glob.glob(args["<fq>"])
     elif "-" in args["<fq>"]:
-        fq_set = [sys.stdin.readline().strip()]
+        fq_set = sys.stdin.readlines().strip().split("\n")
     else:
         fq_set = args["<fq>"]
     fq_set_exists = map(os.path.isfile, fq_set)
