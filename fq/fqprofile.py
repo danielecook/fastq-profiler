@@ -19,6 +19,7 @@ import os
 from clint.textui import colored, puts, progress, indent
 from fq_util import fastq_reader
 import os.path
+import sys
 from datetime import datetime
 
 def get_item(kind, name):
@@ -92,15 +93,17 @@ def main():
                   options_first=True)
     if "*" in args["<fq>"] and len(args) == 1:
         fq_set = glob.glob(args["<fq>"])
+    elif "-" in args["<fq>"]:
+        fq_set = [sys.stdin.readline().strip()]
     else:
         fq_set = args["<fq>"]
-        fq_set_exists = map(os.path.isfile, fq_set)
-        if not all(fq_set_exists):
-            missing_files = [f for f,exists in zip(fq_set, fq_set_exists) if exists is False]
-            with indent(4):
-                puts(colored.red("\nFile not found:\n\n" + \
-                                 "\n".join(missing_files) + "\n"))
-                exit()
+    fq_set_exists = map(os.path.isfile, fq_set)
+    if not all(fq_set_exists):
+        missing_files = [f for f,exists in zip(fq_set, fq_set_exists) if exists is False]
+        with indent(4):
+            puts(colored.red("\nFile not found:\n\n" + \
+                             "\n".join(missing_files) + "\n"))
+            exit()
 
 
     global ds
