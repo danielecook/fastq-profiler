@@ -36,6 +36,7 @@ import time
 import glob
 from subprocess import Popen, PIPE
 from tempfile import gettempdir
+import socket
 
 
 def fastqc(filename):
@@ -353,11 +354,12 @@ def main():
                 if verbose:
                     puts_err(colored.blue(basename + "\t[x] FastQC already run"))
 
-        path_filename = os.path.abspath(fastq)
+        filename = os.path.abspath(fastq)
+        kwdata['hostname'] = [unicode(os.getlogin())]
+        kwdata['basename'] = [unicode(basename)]
+        kwdata['filename'] = [unicode(filename)]
         update_item(kind,
                     hash,
-                    filename=[unicode(fastq)],
-                    path_filename=[unicode(path_filename)],
                     **kwdata)
         puts_err(colored.blue(basename + "\tComplete"))
 
