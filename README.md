@@ -1,8 +1,8 @@
 # fastq-profiler
 
-__fastq-profiler__ is a command line utility for keeping track of and organizing fastqs. fastq-profiler generates summary statistics and stores data using the file hash in [Google Datastore](https://cloud.google.com/datastore/). 
+__fastq-profiler__ is a command line utility for keeping track of and organizing fastqs. fastq-profiler generates summary statistics and associates it with fastqc files using an md5sum as an identifier in [Google Datastore](https://cloud.google.com/datastore/).
 
-The program stores data in Google Datastore because it is centralized - allowing you to profile fastqs locally, or within cluster environments and elsewhere without having to track/combine files. Importantly, when duplicates are identified, fastq-profiler keeps track of both locations, allowing you to identify and track their locations.
+I chose Google Datastore because it is centralized - allowing you to profile fastqs locally, or within cluster environments and elsewhere without having to track/combine files. Importantly, when duplicates are identified, fastq-profiler keeps track of both locations, allowing you to identify and track their locations.
 
 ### Installation
 
@@ -12,14 +12,14 @@ Coming soon.
 
 ### Setup
 
-1. Setup an account with google cloud.
-2. Authorize Google Cloud using the [gcloud SDK](https://cloud.google.com/sdk/):
+* Setup an account with google cloud.
+* Authorize Google Cloud using the [gcloud SDK](https://cloud.google.com/sdk/):
 
 ```
 gcloud auth login
 ```
 
-3. Set your project and default Google Datastore "kind" using:
+* Set your project and default Google Datastore "kind" using:
 
 ```
 fq set <project> <kind>
@@ -27,11 +27,11 @@ fq set <project> <kind>
 
 ### Data
 
-__fastq-profiler__ uses an md5sum of each fastq processed as a `name` (analogous to a key) in Google Datastore and stores its associated data as properties under a `fastq` kind in Google Datastore. Resulting data looks like this:
+__fastq-profiler__ generates a hash of every fastq submitted and uses it to track and store data about fastqs. The end result looks like this within the browsable Google Datastore interface:
 
 ![fqprofile-datastore](datastore.png)
 
-The following properties are stored:
+The following pieces of information about fastqs (properties) are stored:
 
 1. `key` Hash of the file
 1. `filename` Fastq file name
@@ -78,11 +78,11 @@ _For example:_
 1. `illumina_filename_read` =  R1
 1. `illumina_filename_set_number` 1
 
-`fq profile` creates a .checksum file in every directory containing fastqs that it is run on. The `.checksum` file is used as a cache when retrieving data for a fastq.
+`fq profile` creates a .checksum file in every directory containing fastqs that it is run on. The `.checksum` file is used as a cache of file hashes to make retrieval of data easier and help with file tracking.
 
 __FastQC Stats__
 
-`fastq-profiler` can optionally store FastQC results in datastore as well, and these results can be output as one file, enabling easy aggregation of data. To incorporate FastQC data, be sure to use the `--fastqc` flag:
+`fastq-profiler` can optionally store [FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/) results in datastore as well, and these results can be output as one file, enabling easy aggregation of fastqc results. To incorporate FastQC data, be sure to use the `--fastqc` flag:
 
 ```
 fq profile --fastqc <fq>
@@ -117,6 +117,8 @@ fq set 'my-google-cloud-project' 'fastq-set'
 ```
 
 __Profile a fastq__
+
+The `profile` command is designed to be run on any/all fastqs you have, even if they are duplicates. When duplicate files are identified, the path and filenames are both stored under the same entry. However, because they have the same file hash, `fastq-profiler` does not repeat profiling or fastqc operations.
 
 ```
 fq profile [options] <fq>...
