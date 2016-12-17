@@ -9,6 +9,7 @@ usage:
 options:
   -h --help                   Show this screen.
   --version                   Show version.
+  --fastqc                    Gather fastqc statistics as well
   --kv=<k:v>                  Additional key-value pairs to add
 
 """
@@ -20,7 +21,7 @@ import io
 import os
 from clint.textui import colored, puts_err, progress, indent
 import fqprofile
-from fq import autoconvert, json_serial
+from fq import autoconvert, json_serial, parse_fastqc, check_program_exists
 from fq.fq_util import fastq_reader
 import json
 import os.path
@@ -29,19 +30,54 @@ from datetime import datetime
 from math import log
 import re
 import time
+import glob
+from subprocess import Popen, PIPE
+from tempfile import gettempdir
+
+def fastqc(filename):
+    basename = os.path.basename(filename)
+    t_dir = gettempdir()
+    fastqc_results = filename.replace(".fq", "_fastqc") \
+                             .replace(".fastq", "_fastqc") \
+                             .replace("_fastqc.gz", "")
+
+    comm = ["fastqc", "--out", t_dir, "--extract", filename]
+    out, err = Popen(comm, stdout=PIPE, stderr=PIPE).communicate()
+    fqc_file = t_dir + "/" + fastqc_results + "_fastqc/fastqc_data.txt"
+    return parse_fastqc(fqc_file)
+
+
+def test_fastqc(filename):
+    return filename.endswith(".fq.gz") or filename.endswith(".fastq.gz")
 
 
 def get_item(kind, name):
     return ds.get(ds.key(kind, name))
 
 
+exclude_indices = ['most_abundant_sequence',
+                   'fastqc_per_base_sequence_quality_data',
+                   'fastqc_per_tile_sequence_quality_data',
+                   'fastqc_per_sequence_quality_scores_data',
+                   'fastqc_per_base_sequence_content_data',
+                   'fastqc_per_sequence_gc_content_data',
+                   'fastqc_per_base_n_content_data',
+                   'fastqc_sequence_length_distribution_data',
+                   'fastqc_sequence_duplication_levels_data',
+                   'fastqc_overrepresented_sequences_data',
+                   'fastqc_adapter_content_data',
+                   'fastqc_kmer_content_data']
+
+
 def update_item(kind, name, **kwargs):
     item = get_item(kind, name)
     if item is None:
         m = datastore.Entity(key=ds.key(kind, name),
-                             exclude_from_indexes=['Most_Abundant_Sequence'])
+                             exclude_from_indexes=exclude_indices)
     else:
-        m = item
+        m = datastore.Entity(key=ds.key(kind, name),
+                             exclude_from_indexes=exclude_indices)
+        m.update(dict(item))
     for key, value in kwargs.items():
         if type(value) == str:
             m[key] = unicode(value)
@@ -77,7 +113,7 @@ def store_item(kind, name, **kwargs):
     ds.put(m)
 
 
-def query_item(kind, filters = None):
+def query_item(kind, filters=None):
     # filters:
     # [("var_name", "=", 1)]
     query = ds.query(kind=kind)
@@ -116,9 +152,9 @@ class checksums:
             self.hashes.update(hash_set)
 
         if filename in self.hashes.keys():
-            puts_err(colored.blue(basename + "\tUsing cached hash"))
+            puts_err(colored.blue("\n" + basename + "\t[x] Using cached hash"))
         else:
-            puts_err(colored.blue(basename))
+            puts_err(colored.blue("\n" + basename + "\t[ ] Generating hash"))
 
         if filename not in self.hashes.keys():
             hash = md5sum(filename).hexdigest()
@@ -128,7 +164,6 @@ class checksums:
             out = hash + "\t" + filename + "\n"
             open(checksum_file, 'a').write(out)
         return self.hashes[filename]
-
 
 
 # Stack Overflow: 1094841
@@ -142,7 +177,7 @@ def file_size(size):
 
 def main():
     args = docopt(__doc__,
-                  options_first=True)
+                  options_first=False)
 
     settings_file = os.path.dirname(fqprofile.__file__) + "/.config"
     # Save settings
@@ -171,7 +206,6 @@ def main():
         for i in fastq_dumped:
             print(json.dumps(i, default=json_serial, indent=4, sort_keys=True))
 
-
     if "*" in args["<fq>"] and len(args) == 1:
         fq_set = glob.glob(args["<fq>"])
     elif "-" in args["<fq>"]:
@@ -179,6 +213,16 @@ def main():
     else:
         fq_set = args["<fq>"]
     fq_set_exists = map(os.path.isfile, fq_set)
+    fastqc_complient = map(test_fastqc, fq_set)
+
+    if args["--fastqc"]:
+        check_program_exists("fastqc")
+        if not all(fastqc_complient):
+            err_msg = "\n--fastqc only works with fq.gz, fastq.gz," + \
+                       " fq, and fastq extensions.\n"
+            with indent(4):
+                puts_err(colored.red(err_msg))
+                exit()
     if not all(fq_set_exists):
         missing_files = [f for f, exists in zip(fq_set, fq_set_exists)
                          if exists is False]
@@ -186,6 +230,7 @@ def main():
             puts_err(colored.red("\nFile not found:\n\n" +
                              "\n".join(missing_files) + "\n"))
             exit()
+
 
     error_fqs = []
     ck = checksums()
@@ -203,7 +248,10 @@ def main():
         if args["fetch"]:
             d = get_item(kind, hash)
             if d:
-                print(json.dumps(d, default=json_serial, indent=4, sort_keys=True))
+                print(json.dumps(d,
+                                 default=json_serial,
+                                 indent=4,
+                                 sort_keys=True))
             else:
                 puts_err(colored.red("{basename} has not been profiled. Profile with 'fq profile'".format(basename=basename)))
             continue
@@ -212,9 +260,11 @@ def main():
         kwdata = {}
         # Test if fq stats generated.
         if nfq is None or u"total_reads" not in nfq.keys():
-            puts_err(colored.blue(basename + "\tProfiling"))
+            puts_err(colored.blue(basename + "\t[ ] Profiling"))
             kwdata.update(fq.header)
             kwdata.update(fq.calculate_fastq_stats())
+        else:
+            puts_err(colored.blue(basename + "\t[x] Already profiled"))
 
         # Test if fastq filename matches illumina conventions
         illumina_keys = None
@@ -240,6 +290,7 @@ def main():
             illumina_data = dict(zip(illumina_keys, illumina_values))
             kwdata.update(illumina_data)
 
+        # File statistics
         file_stat = os.stat(fastq)
         kwdata['filesize'] = file_stat.st_size
         kwdata['hfilesize'] = file_size(file_stat.st_size)
@@ -252,6 +303,15 @@ def main():
             kv = [x.split(":") for x in args['--kv'].split(",")]
             kv = {k: autoconvert(v) for k, v in kv}
             kwdata.update(kv)
+
+        # FASTQC
+        if args["--fastqc"]:
+            if  nfq is None or u"fastqc_version" not in nfq.keys():
+                puts_err(colored.blue(basename + "\t[ ] Running Fastqc"))
+                fqc_data = fastqc(fastq)
+                kwdata.update(fqc_data)
+            else:
+                puts_err(colored.blue(basename + "\t[x] FastQC already run"))
 
         path_filename = os.path.abspath(fastq)
         update_item(kind,
