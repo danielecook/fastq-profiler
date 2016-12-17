@@ -5,9 +5,11 @@ usage:
 
 options:
   --project=<project>         Google Cloud Project Name [default: andersen-lab]
-  --kind=<kind>               Datastore kind [default: fastq]
+  --kind=<kind>               Datastore kind [default: fastq-test]
   -h --help                   Show this screen.
   --version                   Show version.
+  --force-md5                 Don't use cached md5 values
+  --kv=<k:v>                  Additional key-value pairs
 
 """
 
@@ -17,12 +19,13 @@ import hashlib
 import io
 import os
 from clint.textui import colored, puts, progress, indent
-from fq_util import fastq_reader
+from fq.fq_util import fastq_reader
+from fq import autoconvert
 import os.path
 import sys
 from datetime import datetime
 from math import log
-
+import re
 
 def get_item(kind, name):
     return ds.get(ds.key(kind, name))
@@ -83,6 +86,37 @@ def md5sum(src, length=io.DEFAULT_BUFFER_SIZE):
     return md5
 
 
+class checksums:
+    def __init__(self):
+        self.hashes = {}
+
+    def get_or_update_checksum(self, filename):
+        filename = os.path.abspath(filename)
+        basename = os.path.basename(filename)
+        base_dir = os.path.dirname(filename)
+        checksum_file = base_dir + "/.checksum"
+        if os.path.exists(checksum_file):
+            hash_set = open(checksum_file, 'r').readlines()
+            hash_set = [x.strip().split("\t") for x in hash_set]
+            hash_set = {v: k for k, v in hash_set}
+            self.hashes.update(hash_set)
+
+        if filename in self.hashes.keys():
+            puts(colored.blue(basename + "\tUsing cached hash"))
+        else:
+            puts(colored.blue(basename))
+
+        if filename not in self.hashes.keys():
+            hash = md5sum(filename).hexdigest()
+            self.hashes.update({filename: hash})
+            # Generate hash if it does not exist
+            self.hashes.update({filename: hash})
+            out = hash + "\t" + filename + "\n"
+            open(checksum_file, 'a').write(out)
+        return self.hashes[filename]
+
+
+
 # Stack Overflow: 1094841
 _suffixes = ['bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
 
@@ -95,6 +129,7 @@ def file_size(size):
 def main():
     args = docopt(__doc__,
                   options_first=True)
+
     if "*" in args["<fq>"] and len(args) == 1:
         fq_set = glob.glob(args["<fq>"])
     elif "-" in args["<fq>"]:
@@ -113,8 +148,10 @@ def main():
     global ds
     ds = datastore.Client(project=args['--project'])
     error_fqs = []
+    ck = checksums()
     for fastq in fq_set:
-        puts(colored.blue(fastq))
+        basename = os.path.basename(fastq)
+        hash = ck.get_or_update_checksum(fastq)
         fq = fastq_reader(fastq)
         if fq.error is True:
             error_fqs.append(fastq)
@@ -122,13 +159,40 @@ def main():
                 puts(colored.red("\nDoes not appear to be a Fastq: " +
                      fastq + "\n"))
             continue
-        hash = md5sum(fastq).hexdigest()
+
+
         nfq = get_item(args["--kind"], hash)
         kwdata = {}
         # Test if fq stats generated.
         if nfq is None or u"total_reads" not in nfq.keys():
+            puts(colored.blue(basename + "\tProfiling"))
             kwdata.update(fq.header)
             kwdata.update(fq.calculate_fastq_stats())
+
+        # Test if fastq filename matches illumina conventions
+        illumina_keys = None
+        i1 = re.match(r"([^_]+)_([ATGC]+)_(L[0-9]{3})_(R[12])_([0-9]{3}).(fastq|fq).gz", basename)
+        i2 = re.match(r"([^_]+)_(S[0-9]+)_(L[0-9]{3})_(R[12])_([0-9]{3}).(fastq|fq).gz", basename)
+        if i1:
+            r = i1
+            illumina_keys = ["illumina_filename_sample",
+                             "illumina_filename_barcode_sequence",
+                             "illumina_filename_lane",
+                             "illumina_filename_read",
+                             "illumina_filename_set_number"]
+        elif i2:
+            r = i2
+            illumina_keys = ["illumina_filename_sample",
+                             "illumina_filename_sample_number",
+                             "illumina_filename_lane",
+                             "illumina_filename_read",
+                             "illumina_filename_set_number"]
+        if illumina_keys:
+            puts(colored.blue(basename + "\tIllumina Filename"))
+            illumina_values = map(autoconvert, r.groups())
+            illumina_data = dict(zip(illumina_keys, illumina_values))
+            kwdata.update(illumina_data)
+
         file_stat = os.stat(fastq)
         kwdata['filesize'] = file_stat.st_size
         kwdata['hfilesize'] = file_size(file_stat.st_size)
@@ -136,7 +200,7 @@ def main():
         kwdata['date_created'] = datetime.fromtimestamp(date_created)
 
         path_filename = os.path.abspath(fastq)
-        update_item("fastq",
+        update_item(args["--kind"],
                     hash,
                     filename=[unicode(fastq)],
                     path_filename=[unicode(path_filename)],
