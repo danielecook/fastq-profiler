@@ -21,6 +21,8 @@ from fq_util import fastq_reader
 import os.path
 import sys
 from datetime import datetime
+from math import log
+
 
 def get_item(kind, name):
     return ds.get(ds.key(kind, name))
@@ -29,7 +31,8 @@ def get_item(kind, name):
 def update_item(kind, name, **kwargs):
     m = get_item(kind, name)
     if m is None:
-        m = datastore.Entity(key=ds.key(kind, name), exclude_from_indexes = ['Most_Abundant_Sequence'])
+        m = datastore.Entity(key=ds.key(kind, name),
+                             exclude_from_indexes=['Most_Abundant_Sequence'])
     for key, value in kwargs.items():
         if type(value) == str:
             m[key] = unicode(value)
@@ -81,8 +84,9 @@ def md5sum(src, length=io.DEFAULT_BUFFER_SIZE):
 
 
 # Stack Overflow: 1094841
-from math import log
 _suffixes = ['bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+
+
 def file_size(size):
     order = int(log(float(size), 2) / 10) if size else 0
     return '{:.4g} {}'.format(size / (1 << (order * 10)), _suffixes[order])
@@ -99,12 +103,12 @@ def main():
         fq_set = args["<fq>"]
     fq_set_exists = map(os.path.isfile, fq_set)
     if not all(fq_set_exists):
-        missing_files = [f for f,exists in zip(fq_set, fq_set_exists) if exists is False]
+        missing_files = [f for f, exists in zip(fq_set, fq_set_exists)
+                         if exists is False]
         with indent(4):
-            puts(colored.red("\nFile not found:\n\n" + \
+            puts(colored.red("\nFile not found:\n\n" +
                              "\n".join(missing_files) + "\n"))
             exit()
-
 
     global ds
     ds = datastore.Client(project=args['--project'])
@@ -115,7 +119,8 @@ def main():
         if fq.error is True:
             error_fqs.append(fastq)
             with indent(4):
-                puts(colored.red("\nDoes not appear to be a Fastq: " + fastq + "\n"))
+                puts(colored.red("\nDoes not appear to be a Fastq: " +
+                     fastq + "\n"))
             continue
         hash = md5sum(fastq).hexdigest()
         nfq = get_item(args["--kind"], hash)
@@ -136,10 +141,11 @@ def main():
                     filename=[unicode(fastq)],
                     path_filename=[unicode(path_filename)],
                     **kwdata)
-    
+
     if error_fqs and len(fq_set) > 1:
         with indent(4):
-            puts(colored.red("\nFastqs that errored:\n\n" + '\n'.join(error_fqs) + "\n"))
+            puts(colored.red("\nFastqs that errored:\n\n" +
+                 '\n'.join(error_fqs) + "\n"))
 
 
 if __name__ == '__main__':
