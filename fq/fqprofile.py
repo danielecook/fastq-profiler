@@ -1,12 +1,11 @@
 #! /usr/bin/env python
 """
 usage:
-    fqprofile fetch <fq>...
-    fqprofile [options] <fq>...
+    fq fetch <fq>...
+    fq set <project> <kind>
+    fq profile [options] <fq>...
 
 options:
-  --project=<project>         Google Cloud Project Name [default: andersen-lab]
-  --kind=<kind>               Datastore kind [default: fastq-test]
   -h --help                   Show this screen.
   --version                   Show version.
   --force-md5                 Don't use cached md5 values
@@ -20,8 +19,9 @@ import hashlib
 import io
 import os
 from clint.textui import colored, puts_err, progress, indent
-from fq.fq_util import fastq_reader
+import fqprofile
 from fq import autoconvert, json_serial
+from fq.fq_util import fastq_reader
 import json
 import os.path
 import sys
@@ -143,6 +143,26 @@ def main():
     args = docopt(__doc__,
                   options_first=True)
 
+    settings_file = os.path.dirname(fqprofile.__file__) + "/.config"
+    # Save settings
+    if args["set"]:
+        settings = {"project": args["<project>"], "kind": args["<kind>"]}
+        open(settings_file, 'w').write(json.dumps(settings, indent=4))
+        puts_err("Saved Settings")
+        exit()
+    else:
+        if not os.path.exists(settings_file):
+            with indent(4):
+                exit(puts_err(colored.red("\nPlease set project and kind using 'fq set'\n")))
+        # Load settings
+        settings = json.loads(open(settings_file, 'r').read())
+        project = settings['project']
+        kind = settings['kind']
+        output_str = "Project: {project} - Kind: {kind}".format(**locals())
+        output_under = len(output_str) * "="
+        puts_err(colored.blue("\n{output_str}\n{output_under}\n".format(**locals())))
+
+
     if "*" in args["<fq>"] and len(args) == 1:
         fq_set = glob.glob(args["<fq>"])
     elif "-" in args["<fq>"]:
@@ -159,7 +179,7 @@ def main():
             exit()
 
     global ds
-    ds = datastore.Client(project=args['--project'])
+    ds = datastore.Client(project=project)
     error_fqs = []
     ck = checksums()
     for fastq in fq_set:
@@ -174,12 +194,14 @@ def main():
             continue
 
         if args["fetch"]:
-            d = get_item(args['--kind'], hash)
+            d = get_item(kind, hash)
             if d:
                 print(json.dumps(d, default=json_serial, indent=4, sort_keys=True))
+            else:
+                puts_err(colored.red("{basename} has not been profiled. Profile with 'fq profile'".format(basename=basename)))
             continue
 
-        nfq = get_item(args["--kind"], hash)
+        nfq = get_item(kind, hash)
         kwdata = {}
         # Test if fq stats generated.
         if nfq is None or u"total_reads" not in nfq.keys():
@@ -225,7 +247,7 @@ def main():
             kwdata.update(kv)
 
         path_filename = os.path.abspath(fastq)
-        update_item(args["--kind"],
+        update_item(kind,
                     hash,
                     filename=[unicode(fastq)],
                     path_filename=[unicode(path_filename)],

@@ -14,7 +14,7 @@ setup(name='fastq-profiler',
       install_requires=required,
       entry_points="""
       [console_scripts]
-      fqprofile = fq.fqprofile:main
+      fq = fq.fqprofile:main
       """,
       zip_safe=False)
 
