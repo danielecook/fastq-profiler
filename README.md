@@ -1,13 +1,13 @@
 # fastq-profiler
 
-__fastq-profiler__ is a command line utility for keeping track of and organizing fastqs. fastq-profiler generates summary statistics and associates it with fastqc files using an md5sum as an identifier in [Google Datastore](https://cloud.google.com/datastore/).
+__fastq-profiler__ is a command line utility for keeping track of fastqs and process and store information associated with them. `fastq-profiler` generates summary statistics from processed fastq files and stores the data using the files md5sum as an identifier in [Google Datastore](https://cloud.google.com/datastore/).
 
-I chose Google Datastore because it is centralized - allowing you to profile fastqs locally, or within cluster environments and elsewhere without having to track/combine files. Importantly, when duplicates are identified, fastq-profiler keeps track of both locations, allowing you to identify and track their locations.
+I chose Google Datastore because it is centralized - allowing you to profile fastqs locally, or within cluster environments and elsewhere in parallel without having to track/combine files. `fastq-profiler` also integrates with [FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/) and can be used to output fastq statistics for analysis. Importantly, when duplicates are identified, fastq-profiler keeps track of both locations, allowing you to identify manage duplicate files if necessary.
 
 ### Installation
 
 ```
-Coming soon.
+pip install https://github.com/danielecook/fastq-profiler/archive/v0.0.1.tar.gz
 ```
 
 ### Setup
