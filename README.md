@@ -1,8 +1,8 @@
-# fqprofiler
+# fastq-profiler
 
-`fqprofiler` is a command line utility for keeping track of and organizing fastqs. `fqprofiler` generates summary statistics and stores data using the file hash in [Google Datastore](https://cloud.google.com/datastore/).
+__fastq-profiler__ is a command line utility for keeping track of and organizing fastqs. fastq-profiler generates summary statistics and stores data using the file hash in [Google Datastore](https://cloud.google.com/datastore/).
 
-The program stores data in Google Datastore because it is centralized - allowing you to profile fastqs locally, or within cluster environments and elsewhere without having to track/combine files. Importantly, when duplicates are identified, `fqprofiler` keeps track of both locations, allowing you to identify and track the locations of duplicated files.
+The program stores data in Google Datastore because it is centralized - allowing you to profile fastqs locally, or within cluster environments and elsewhere without having to track/combine files. Importantly, when duplicates are identified, fastq-profiler keeps track of both locations, allowing you to identify and track the locations of duplicated files.
 
 ### Installation
 
@@ -24,27 +24,27 @@ gcloud auth login
 __Profile a fastq__
 
 ```
-fqprofile [options] <fq>...
+fq profile [options] <fq>...
 ```
 
-__Run fqprofile on multiple fastqs__
+__Run fq profile on multiple fastqs__
 
 ```
-fqprofile myseq1.fq.gz myseq2.fq.gz myseq3.fq.gz
+fq profile myseq1.fq.gz myseq2.fq.gz myseq3.fq.gz
 ```
 
-__Run fqprofile on an entire directory__
+__Run fq profile on an entire directory__
 
 You can use a `*` wildcard:
 
 ```
-fqprofile *.fq.gz
+fq profile *.fq.gz
 ```
 
 __Read files from stdin__
 
 ```
-find . -name *.gz  | egrep "(fastq|fq)" - | fqprofile - 
+find . -name *.gz  | egrep "(fastq|fq)" - | fq profile - 
 ```
 
 #### Fetching fastq data
@@ -52,7 +52,7 @@ find . -name *.gz  | egrep "(fastq|fq)" - | fqprofile -
 Once you have profiled a fastq, you can fetch its associated data with:
 
 ```
-fqprofile fetch [options] <fq>...
+fq profile fetch [options] <fq>...
 ```
 
 __Output__
@@ -97,7 +97,7 @@ __Output__
 
 ### Data
 
-`fqprofile` uses an md5sum of each fastq processed as a `name` (analogous to a key) in Google Datastore and stores its associated data as properties under a `fastq` kind in Google Datastore. Resulting data looks like this:
+__fastq-profiler__ uses an md5sum of each fastq processed as a `name` (analogous to a key) in Google Datastore and stores its associated data as properties under a `fastq` kind in Google Datastore. Resulting data looks like this:
 
 ![fqprofile-datastore](datastore.png)
 
@@ -148,7 +148,7 @@ _For example:_
 1. `illumina_filename_read` =  R1
 1. `illumina_filename_set_number` 1
 
-`fqprofile` creates a .checksum file in every directory containing fastqs that it is run on. The `.checksum` file is used as a cache when retrieving data for a fastq.
+`fq profile` creates a .checksum file in every directory containing fastqs that it is run on. The `.checksum` file is used as a cache when retrieving data for a fastq.
 
 
 #### Fetch
@@ -158,7 +158,7 @@ _For example:_
 __--kv=<k:v>__ can be used to store custom data. 
 
 ```
-fqprofile --kv=date_sequenced:20160610 *.fq.gz
+fq profile --kv=date_sequenced:20160610 *.fq.gz
 ```
 
 In the example above, a 'date_sequenced' property will be added to the fastq entity in google datastore.
