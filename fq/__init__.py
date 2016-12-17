@@ -2,12 +2,14 @@ from datetime import datetime
 from clint.textui import colored, puts_err
 import os
 
+
 def boolify(s):
     if s == 'True':
         return True
     if s == 'False':
         return False
     raise ValueError("huh?")
+
 
 def autoconvert(s):
     for fn in (boolify, int, float):
@@ -17,13 +19,14 @@ def autoconvert(s):
             pass
     return s
 
+
 def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
 
     if isinstance(obj, datetime):
         serial = obj.isoformat()
         return serial
-    raise TypeError ("Type not serializable")
+    raise TypeError("Type not serializable")
 
 
 def parse_fastqc(fqc):
@@ -79,6 +82,47 @@ def which(program):
 
     return None
 
+
 def check_program_exists(program):
     if which(program) is None:
         exit(puts_err(colored.red("\nError: " + program + " not installed or on PATH.\n")))
+
+
+fastqc_groups = ['per_base_sequence_quality',
+                 'per_tile_sequence_quality',
+                 'per_sequence_quality_scores',
+                 'per_base_sequence_content',
+                 'per_sequence_gc_content',
+                 'per_base_n_content',
+                 'sequence_length_distribution',
+                 'sequence_duplication_levels',
+                 'overrepresented_sequences',
+                 'adapter_content',
+                 'kmer_content']
+
+fastqc_headers = {'per_base_sequence_quality': ["base",
+                                                "mean",
+                                                "median",
+                                                "lower_quartile",
+                                                "upper_quartile",
+                                                "10th_percentile",
+                                                "90th_percentile"],
+                  'per_tile_sequence_quality': ["Tile", "Base", "Mean"],
+                  'per_sequence_quality_scores': ["quality", "count"],
+                  'per_base_sequence_content': ["base", "G", "A", "T", "C"],
+                  'per_sequence_gc_content': ["gc_content", "count"],
+                  'per_base_n_content': ["base", "n_count"],
+                  'sequence_length_distribution': ["length", "count"],
+                  'sequence_duplications_levels': ["duplication_level",
+                                                   "percentage_of_deduplicated",
+                                                   "percentage_of_total"],
+                  'overrepresented_sequences': ["sequence",
+                                                "count",
+                                                "percentage",
+                                                "possible_source"],
+                  'adapter_content': ["position", "illumina_universal_adapter",
+                                      "illumina_small_rna_3_adapter",
+                                      "illumina_small_rna_5_adapter",
+                                      "nextera_transposase_sequence",
+                                      "solid_small_rna_adapter"],
+                  'kmer_content': ['kasdf']}

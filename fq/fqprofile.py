@@ -1,14 +1,16 @@
 #! /usr/bin/env python
 """
 usage:
+    fq profile [options] <fq>...
     fq fetch <fq>...
+    fq fastqc-dump <fastqc-group> [<fq>...]
     fq dump
     fq set <project> <kind>
-    fq profile [options] <fq>...
 
 options:
   -h --help                   Show this screen.
   --version                   Show version.
+  --verbose                   Speak up
   --fastqc                    Gather fastqc statistics as well
   --kv=<k:v>                  Additional key-value pairs to add
 
@@ -21,7 +23,8 @@ import io
 import os
 from clint.textui import colored, puts_err, progress, indent
 import fqprofile
-from fq import autoconvert, json_serial, parse_fastqc, check_program_exists
+from fq import autoconvert, json_serial, parse_fastqc
+from fq import check_program_exists, fastqc_groups, fastqc_headers
 from fq.fq_util import fastq_reader
 import json
 import os.path
@@ -34,8 +37,8 @@ import glob
 from subprocess import Popen, PIPE
 from tempfile import gettempdir
 
+
 def fastqc(filename):
-    basename = os.path.basename(filename)
     t_dir = gettempdir()
     fastqc_results = filename.replace(".fq", "_fastqc") \
                              .replace(".fastq", "_fastqc") \
@@ -152,9 +155,11 @@ class checksums:
             self.hashes.update(hash_set)
 
         if filename in self.hashes.keys():
-            puts_err(colored.blue("\n" + basename + "\t[x] Using cached hash"))
+            if verbose:
+                puts_err(colored.blue("\n" + basename + "\t[x] Using cached hash"))
         else:
-            puts_err(colored.blue("\n" + basename + "\t[ ] Generating hash"))
+            if verbose:
+                puts_err(colored.blue("\n" + basename + "\t[ ] Generating hash"))
 
         if filename not in self.hashes.keys():
             hash = md5sum(filename).hexdigest()
@@ -178,7 +183,7 @@ def file_size(size):
 def main():
     args = docopt(__doc__,
                   options_first=False)
-
+    ck = checksums()
     settings_file = os.path.dirname(fqprofile.__file__) + "/.config"
     # Save settings
     if args["set"]:
@@ -196,9 +201,11 @@ def main():
         kind = settings['kind']
         output_str = "Project: {project} - Kind: {kind}".format(**locals())
         output_under = len(output_str) * "="
-        puts_err(colored.blue("\n{output_str}\n{output_under}\n".format(**locals())))
+        puts_err(colored.blue("\n{output_str}\n{output_under}".format(**locals())))
 
     global ds
+    global verbose
+    verbose = args["--verbose"]
     ds = datastore.Client(project=project)
 
     if args["dump"]:
@@ -214,6 +221,35 @@ def main():
         fq_set = args["<fq>"]
     fq_set_exists = map(os.path.isfile, fq_set)
     fastqc_complient = map(test_fastqc, fq_set)
+
+
+    if args["fastqc-dump"]:
+        fastqc_group = "fastqc_" + args["<fastqc-group>"] + "_data"
+        if args["<fastqc-group>"] not in fastqc_groups:
+            with indent(4):
+                puts_err(colored.blue("\nFastQC group not found. Available FastQC groups:\n\n" + 
+                                      '\n'.join(fastqc_groups) + "\n"))
+                exit()
+
+        if fq_set:
+            # Output header
+            print('\t'.join(['filename'] + fastqc_headers[args["<fastqc-group>"]]))
+            for i in fq_set:
+                hash = ck.get_or_update_checksum(i)
+                fastqc_data = get_item(kind, hash)[fastqc_group].splitlines()
+                out = '\n'.join([i + "\t" + x for x in fastqc_data])
+                print(out)
+        else:
+            # Output header
+            print('\t'.join(['hash', 'filename'] + fastqc_headers[args["<fastqc-group>"]]))
+            # If no fq specified, dump everything:
+            fastq_dumped = query_item(kind)
+            for i in fastq_dumped:
+                fastqc_data = i[fastqc_group].splitlines()
+                fnames = i.key.name + "\t" + i['filename'][0]
+                out = '\n'.join([fnames + "\t" + x for x in fastqc_data])
+                print(out)
+        exit()
 
     if args["--fastqc"]:
         check_program_exists("fastqc")
@@ -233,7 +269,6 @@ def main():
 
 
     error_fqs = []
-    ck = checksums()
     for fastq in fq_set:
         basename = os.path.basename(fastq)
         hash = ck.get_or_update_checksum(fastq)
@@ -244,6 +279,7 @@ def main():
                 puts_err(colored.red("\nDoes not appear to be a Fastq: " +
                      fastq + "\n"))
             continue
+
 
         if args["fetch"]:
             d = get_item(kind, hash)
@@ -260,11 +296,13 @@ def main():
         kwdata = {}
         # Test if fq stats generated.
         if nfq is None or u"total_reads" not in nfq.keys():
-            puts_err(colored.blue(basename + "\t[ ] Profiling"))
+            if verbose:
+                puts_err(colored.blue(basename + "\t[ ] Profiling"))
             kwdata.update(fq.header)
             kwdata.update(fq.calculate_fastq_stats())
         else:
-            puts_err(colored.blue(basename + "\t[x] Already profiled"))
+            if verbose:
+                puts_err(colored.blue(basename + "\t[x] Already profiled"))
 
         # Test if fastq filename matches illumina conventions
         illumina_keys = None
@@ -307,11 +345,13 @@ def main():
         # FASTQC
         if args["--fastqc"]:
             if  nfq is None or u"fastqc_version" not in nfq.keys():
-                puts_err(colored.blue(basename + "\t[ ] Running Fastqc"))
+                if verbose:
+                    puts_err(colored.blue(basename + "\t[ ] Running Fastqc"))
                 fqc_data = fastqc(fastq)
                 kwdata.update(fqc_data)
             else:
-                puts_err(colored.blue(basename + "\t[x] FastQC already run"))
+                if verbose:
+                    puts_err(colored.blue(basename + "\t[x] FastQC already run"))
 
         path_filename = os.path.abspath(fastq)
         update_item(kind,

@@ -80,6 +80,27 @@ _For example:_
 
 `fq profile` creates a .checksum file in every directory containing fastqs that it is run on. The `.checksum` file is used as a cache when retrieving data for a fastq.
 
+__FastQC Stats__
+
+`fastq-profiler` can optionally store FastQC results in datastore as well, and these results can be output as one file, enabling easy aggregation of data. To incorporate FastQC data, be sure to use the `--fastqc` flag:
+
+```
+fq profile --fastqc <fq>
+```
+
+`fastqc-profiler` will store the following data in Google Datastore as unindexed properties:
+
+* per_base_sequence_quality
+* per_tile_sequence_quality
+* per_sequence_quality_scores
+* per_base_sequence_content
+* per_sequence_gc_content
+* per_base_n_content
+* sequence_length_distribution
+* sequence_duplication_levels
+* overrepresented_sequences
+* adapter_content
+* kmer_content
 
 ### Usage
 
@@ -180,6 +201,58 @@ fq dump
 
 The command above will dump all fastq data in JSON format.
 
+#### Dump FastQC data
+
+`fastq-profiler` can store FastQC data, enabling easy aggregation of fastqc results. To use, you must profile fastqs with the `--fastqc` flag. For example:
+
+```
+fq profile --fastqc <fq>
+```
+
+Then, you can output data using:
+
+```
+fq fastq-dump <fastqc-group> [<fq>...]
+```
+
+Where <fastqc-group> is one of:
+
+* per_base_sequence_quality
+* per_tile_sequence_quality
+* per_sequence_quality_scores
+* per_base_sequence_content
+* per_sequence_gc_content
+* per_base_n_content
+* sequence_length_distribution
+* sequence_duplication_levels
+* overrepresented_sequences
+* adapter_content
+* kmer_content
+
+__For example:__
+
+```
+fq fastqc-dump per_base_sequence_content *.fq.gz
+```
+
+Will output all fastqc data in one file among files matching the `*.fq.gz` wildcard.
+
+__Output__
+
+```
+filename    base    G   A   T   C
+NIC1_130123_I186_FCC1GJUACXX_L2_CHKPEI13010005_1.fq.gz  1   39.08   25.0    12.36   23.56
+NIC1_130123_I186_FCC1GJUACXX_L2_CHKPEI13010005_1.fq.gz  2   15.952184666117065  22.176422093981863  41.13767518549052   20.733718054410552
+NIC1_130123_I186_FCC1GJUACXX_L2_CHKPEI13010005_1.fq.gz  3   17.0    28.360000000000003  33.0    21.64
+...
+t_IndexQX1791_2.fq.gz   84-85   18.82   30.54   32.28   18.360000000000003
+t_IndexQX1791_2.fq.gz   86-87   18.58   30.159999999999997  33.18   18.08
+t_IndexQX1791_2.fq.gz   88-89   18.44   29.439999999999998  31.96   20.16
+t_IndexQX1791_2.fq.gz   90  18.6    30.48   31.28   19.64
+```
+
+If you specify a list of fastqs, only fastqc results for those files will be dumped. If you leave `<fq>...` empty, all fastqc data for the `<fastqc-group>` specified will be output under the set `kind`.
+
 #### Options
 
 __--kv=<k:v>__ can be used to store custom data. 
@@ -189,3 +262,7 @@ fq profile --kv=date_sequenced:20160610 *.fq.gz
 ```
 
 In the example above, a 'date_sequenced' property will be added to the fastq entity in google datastore.
+
+__--verbose__ - Provide additional information on what is going on under the hood.
+
+
