@@ -2,13 +2,13 @@
 """
 usage:
     fq fetch <fq>...
+    fq dump
     fq set <project> <kind>
     fq profile [options] <fq>...
 
 options:
   -h --help                   Show this screen.
   --version                   Show version.
-  --force-md5                 Don't use cached md5 values
   --kv=<k:v>                  Additional key-value pairs to add
 
 """
@@ -77,12 +77,13 @@ def store_item(kind, name, **kwargs):
     ds.put(m)
 
 
-def query_item(kind, filters):
+def query_item(kind, filters = None):
     # filters:
     # [("var_name", "=", 1)]
     query = ds.query(kind=kind)
-    for var, op, val in filters:
-        query.add_filter(var, op, val)
+    if filters:
+        for var, op, val in filters:
+            query.add_filter(var, op, val)
     return query.fetch()
 
 
@@ -162,6 +163,14 @@ def main():
         output_under = len(output_str) * "="
         puts_err(colored.blue("\n{output_str}\n{output_under}\n".format(**locals())))
 
+    global ds
+    ds = datastore.Client(project=project)
+
+    if args["dump"]:
+        fastq_dumped = query_item(kind)
+        for i in fastq_dumped:
+            print(json.dumps(i, default=json_serial, indent=4, sort_keys=True))
+
 
     if "*" in args["<fq>"] and len(args) == 1:
         fq_set = glob.glob(args["<fq>"])
@@ -178,8 +187,6 @@ def main():
                              "\n".join(missing_files) + "\n"))
             exit()
 
-    global ds
-    ds = datastore.Client(project=project)
     error_fqs = []
     ck = checksums()
     for fastq in fq_set:

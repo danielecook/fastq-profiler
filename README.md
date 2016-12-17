@@ -1,8 +1,8 @@
 # fastq-profiler
 
-__fastq-profiler__ is a command line utility for keeping track of and organizing fastqs. fastq-profiler generates summary statistics and stores data using the file hash in [Google Datastore](https://cloud.google.com/datastore/).
+__fastq-profiler__ is a command line utility for keeping track of and organizing fastqs. fastq-profiler generates summary statistics and stores data using the file hash in [Google Datastore](https://cloud.google.com/datastore/). 
 
-The program stores data in Google Datastore because it is centralized - allowing you to profile fastqs locally, or within cluster environments and elsewhere without having to track/combine files. Importantly, when duplicates are identified, fastq-profiler keeps track of both locations, allowing you to identify and track the locations of duplicated files.
+The program stores data in Google Datastore because it is centralized - allowing you to profile fastqs locally, or within cluster environments and elsewhere without having to track/combine files. Importantly, when duplicates are identified, fastq-profiler keeps track of both locations, allowing you to identify and track their locations.
 
 ### Installation
 
@@ -19,81 +19,11 @@ Coming soon.
 gcloud auth login
 ```
 
-### Usage
-
-__Profile a fastq__
+3. Set your project and default Google Datastore "kind" using:
 
 ```
-fq profile [options] <fq>...
+fq set <project> <kind>
 ```
-
-__Run fq profile on multiple fastqs__
-
-```
-fq profile myseq1.fq.gz myseq2.fq.gz myseq3.fq.gz
-```
-
-__Run fq profile on an entire directory__
-
-You can use a `*` wildcard:
-
-```
-fq profile *.fq.gz
-```
-
-__Read files from stdin__
-
-```
-find . -name *.gz  | egrep "(fastq|fq)" - | fq profile - 
-```
-
-#### Fetching fastq data
-
-Once you have profiled a fastq, you can fetch its associated data with:
-
-```
-fq profile fetch [options] <fq>...
-```
-
-__Output__
-
-```
-{
-    "A_count": 67669, 
-    "C_count": 44800, 
-    "GC_content": 0.3954977777777778, 
-    "G_count": 44187, 
-    "N_count": 4, 
-    "T_count": 68340, 
-    "avg_length": 90.0, 
-    "barcode": "CATCCGGA", 
-    "bases": 224996, 
-    "cum_length": 225000, 
-    "date_created": "2016-12-17T09:57:40+00:00", 
-    "filename": [
-        "t_N2_CGC_130119_I861_FCC1GWRACXX_L6_CHKPEI13010003_2.fq.gz.fq.gz"
-    ], 
-    "filesize": 197839, 
-    "flowcell_lane": 6, 
-    "flowcell_number": 1101, 
-    "fq_profile_count": 5, 
-    "hfilesize": "193 KiB", 
-    "instrument": "@FCC1GWRACXX", 
-    "max_length": 90, 
-    "min_length": 90, 
-    "most_abundant_frequency": "7", 
-    "most_abundant_frequency_percent": "0.28", 
-    "most_abundant_sequence": "GCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAA", 
-    "pair": 2, 
-    "path_filename": [
-        "/Users/dancook/coding/git/fastq-profiler/test/t_N2_CGC_130119_I861_FCC1GWRACXX_L6_CHKPEI13010003_2.fq.gz.fq.gz"
-    ], 
-    "percent_unique": "99.4", 
-    "total_reads": "2500", 
-    "unique_reads": "2485"
-}
-```
-
 
 ### Data
 
@@ -142,7 +72,7 @@ _For example:_
 
 `EA-CFB-2-421_S1_L001_R1_001.fastq.gz` would be parsed into:
 
-1. `illumina_filename_sample` = EA-CFB-2-421
+1. `illumina_filename_sample` = EA-CFB-2-421U
 1. `illumina_filename_sample_number` = S1
 1. `illumina_filename_lane` = L001
 1. `illumina_filename_read` =  R1
@@ -151,7 +81,104 @@ _For example:_
 `fq profile` creates a .checksum file in every directory containing fastqs that it is run on. The `.checksum` file is used as a cache when retrieving data for a fastq.
 
 
-#### Fetch
+### Usage
+
+__Set your `project` and `kind`:__
+
+```
+fq set <project> <kind>
+```
+
+Set `<project>` to your google cloud project name. Set kind to the name of the `kind` you want to store fastq data in within Google Datastore.
+
+```
+fq set 'my-google-cloud-project' 'fastq-set'
+```
+
+__Profile a fastq__
+
+```
+fq profile [options] <fq>...
+```
+
+__Run fq profile on multiple fastqs__
+
+```
+fq profile myseq1.fq.gz myseq2.fq.gz myseq3.fq.gz
+```
+
+__Run fq profile on an entire directory__
+
+You can use a `*` wildcard:
+
+```
+fq profile *.fq.gz
+```
+
+__Read files from stdin__
+
+```
+find . -name *.gz  | egrep "(fastq|fq)" - | fq profile - 
+```
+
+#### Fetching fastq data
+
+Once you have profiled fastqs, you can fetch data associated with them using the `fetch` command:
+
+```
+fq profile fetch myseq1.fq.gz myseq2.fq.gz
+```
+
+__Output__
+
+Output is in JSON format.
+
+```
+{
+    "A_count": 67669, 
+    "C_count": 44800, 
+    "GC_content": 0.3954977777777778, 
+    "G_count": 44187, 
+    "N_count": 4, 
+    "T_count": 68340, 
+    "avg_length": 90.0, 
+    "barcode": "CATCCGGA", 
+    "bases": 224996, 
+    "cum_length": 225000, 
+    "date_created": "2016-12-17T09:57:40+00:00", 
+    "filename": [
+        "t_N2_CGC_130119_I861_FCC1GWRACXX_L6_CHKPEI13010003_2.fq.gz.fq.gz"
+    ], 
+    "filesize": 197839, 
+    "flowcell_lane": 6, 
+    "flowcell_number": 1101, 
+    "fq_profile_count": 5, 
+    "hfilesize": "193 KiB", 
+    "instrument": "@FCC1GWRACXX", 
+    "max_length": 90, 
+    "min_length": 90, 
+    "most_abundant_frequency": "7", 
+    "most_abundant_frequency_percent": "0.28", 
+    "most_abundant_sequence": "GCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAA", 
+    "pair": 2, 
+    "path_filename": [
+        "/Users/dancook/coding/git/fastq-profiler/test/t_N2_CGC_130119_I861_FCC1GWRACXX_L6_CHKPEI13010003_2.fq.gz.fq.gz"
+    ], 
+    "percent_unique": "99.4", 
+    "total_reads": "2500", 
+    "unique_reads": "2485"
+}
+```
+
+#### Dump fastq data
+
+Alternatively, you can dump fastq data stored that is stored in the `kind` you set with `fq set`:
+
+```
+fq dump
+```
+
+The command above will dump all fastq data in JSON format.
 
 #### Options
 
