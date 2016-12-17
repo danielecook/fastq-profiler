@@ -338,7 +338,7 @@ def main():
 
         # Add custom data
         if args['--kv']:
-            puts_err(colored.blue(basename + "\Storing Custom data"))
+            puts_err(colored.blue(basename + "\tStoring Custom data"))
             kv = [x.split(":") for x in args['--kv'].split(",")]
             kv = {k: autoconvert(v) for k, v in kv}
             kwdata.update(kv)
