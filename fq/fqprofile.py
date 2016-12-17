@@ -41,7 +41,8 @@ import socket
 
 def fastqc(filename):
     t_dir = gettempdir()
-    fastqc_results = filename.replace(".fq", "_fastqc") \
+    basename = os.path.basename(filename)
+    fastqc_results = basename.replace(".fq", "_fastqc") \
                              .replace(".fastq", "_fastqc") \
                              .replace("_fastqc.gz", "")
 
