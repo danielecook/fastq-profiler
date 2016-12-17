@@ -251,7 +251,7 @@ t_IndexQX1791_2.fq.gz   88-89   18.44   29.439999999999998  31.96   20.16
 t_IndexQX1791_2.fq.gz   90  18.6    30.48   31.28   19.64
 ```
 
-If you specify a list of fastqs, only fastqc results for those files will be dumped. If you leave `<fq>...` empty, all fastqc data for the `<fastqc-group>` specified will be output under the set `kind`.
+If you specify a list of fastqs, only fastqc results for those files will be dumped. If you leave `<fq>...` empty, all fastqc data for the `<fastqc-group>` specified will be output under the set `kind`. __Note: If a fastq is duplicated, it will only output the first filename that has been stored.__
 
 #### Options
 
