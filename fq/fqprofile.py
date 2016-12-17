@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 """
 usage:
+    fqprofile fetch <fq>...
     fqprofile [options] <fq>...
 
 options:
@@ -9,7 +10,7 @@ options:
   -h --help                   Show this screen.
   --version                   Show version.
   --force-md5                 Don't use cached md5 values
-  --kv=<k:v>                  Additional key-value pairs
+  --kv=<k:v>                  Additional key-value pairs to add
 
 """
 
@@ -18,14 +19,16 @@ from gcloud import datastore
 import hashlib
 import io
 import os
-from clint.textui import colored, puts, progress, indent
+from clint.textui import colored, puts_err, progress, indent
 from fq.fq_util import fastq_reader
-from fq import autoconvert
+from fq import autoconvert, json_serial
+import json
 import os.path
 import sys
 from datetime import datetime
 from math import log
 import re
+
 
 def get_item(kind, name):
     return ds.get(ds.key(kind, name))
@@ -102,9 +105,9 @@ class checksums:
             self.hashes.update(hash_set)
 
         if filename in self.hashes.keys():
-            puts(colored.blue(basename + "\tUsing cached hash"))
+            puts_err(colored.blue(basename + "\tUsing cached hash"))
         else:
-            puts(colored.blue(basename))
+            puts_err(colored.blue(basename))
 
         if filename not in self.hashes.keys():
             hash = md5sum(filename).hexdigest()
@@ -141,7 +144,7 @@ def main():
         missing_files = [f for f, exists in zip(fq_set, fq_set_exists)
                          if exists is False]
         with indent(4):
-            puts(colored.red("\nFile not found:\n\n" +
+            puts_err(colored.red("\nFile not found:\n\n" +
                              "\n".join(missing_files) + "\n"))
             exit()
 
@@ -156,23 +159,28 @@ def main():
         if fq.error is True:
             error_fqs.append(fastq)
             with indent(4):
-                puts(colored.red("\nDoes not appear to be a Fastq: " +
+                puts_err(colored.red("\nDoes not appear to be a Fastq: " +
                      fastq + "\n"))
             continue
 
+        if args["fetch"]:
+            d = get_item(args['--kind'], hash)
+            if d:
+                print(json.dumps(d, default=json_serial, indent=4, sort_keys=True))
+            continue
 
         nfq = get_item(args["--kind"], hash)
         kwdata = {}
         # Test if fq stats generated.
         if nfq is None or u"total_reads" not in nfq.keys():
-            puts(colored.blue(basename + "\tProfiling"))
+            puts_err(colored.blue(basename + "\tProfiling"))
             kwdata.update(fq.header)
             kwdata.update(fq.calculate_fastq_stats())
 
         # Test if fastq filename matches illumina conventions
         illumina_keys = None
-        i1 = re.match(r"([^_]+)_([ATGC]+)_(L[0-9]{3})_(R[12])_([0-9]{3}).(fastq|fq).gz", basename)
-        i2 = re.match(r"([^_]+)_(S[0-9]+)_(L[0-9]{3})_(R[12])_([0-9]{3}).(fastq|fq).gz", basename)
+        i1 = re.match(r"([^_]+)_([ATGC]+)_([L0-9]{4})_([R12]{2})_([0-9]{3}).(fastq|fq).gz", basename)
+        i2 = re.match(r"([^_]+)_(S[0-9]+)_([L0-9]{4})_([R12]{2})_([0-9]{3}).(fastq|fq).gz", basename)
         if i1:
             r = i1
             illumina_keys = ["illumina_filename_sample",
@@ -188,7 +196,7 @@ def main():
                              "illumina_filename_read",
                              "illumina_filename_set_number"]
         if illumina_keys:
-            puts(colored.blue(basename + "\tIllumina Filename"))
+            puts_err(colored.blue(basename + "\tIllumina Filename"))
             illumina_values = map(autoconvert, r.groups())
             illumina_data = dict(zip(illumina_keys, illumina_values))
             kwdata.update(illumina_data)
@@ -199,6 +207,13 @@ def main():
         date_created = file_stat.st_ctime
         kwdata['date_created'] = datetime.fromtimestamp(date_created)
 
+        # Add custom data
+        if args['--kv']:
+            puts_err(colored.blue(basename + "\Storing Custom data"))
+            kv = [x.split(":") for x in args['--kv'].split(",")]
+            kv = {k: autoconvert(v) for k, v in kv}
+            kwdata.update(kv)
+
         path_filename = os.path.abspath(fastq)
         update_item(args["--kind"],
                     hash,
@@ -208,7 +223,7 @@ def main():
 
     if error_fqs and len(fq_set) > 1:
         with indent(4):
-            puts(colored.red("\nFastqs that errored:\n\n" +
+            puts_err(colored.red("\nFastqs that errored:\n\n" +
                  '\n'.join(error_fqs) + "\n"))
 
 

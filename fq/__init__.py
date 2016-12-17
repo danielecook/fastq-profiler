@@ -1,3 +1,5 @@
+from datetime import datetime
+
 def boolify(s):
     if s == 'True':
         return True
@@ -12,3 +14,11 @@ def autoconvert(s):
         except ValueError:
             pass
     return s
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+
+    if isinstance(obj, datetime):
+        serial = obj.isoformat()
+        return serial
+    raise TypeError ("Type not serializable")
