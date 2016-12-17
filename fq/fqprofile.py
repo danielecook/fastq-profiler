@@ -359,6 +359,7 @@ def main():
                     filename=[unicode(fastq)],
                     path_filename=[unicode(path_filename)],
                     **kwdata)
+        puts_err(colored.blue(basename + "\tComplete"))
 
     if error_fqs and len(fq_set) > 1:
         with indent(4):
