@@ -2,12 +2,15 @@
 
 `fqprofiler` is a command line utility for keeping track of and organizing fastqs. `fqprofiler` generates summary statistics and stores data using the file hash in [Google Datastore](https://cloud.google.com/datastore/).
 
+The program stores data in Google Datastore because it is centralized - allowing you to profile fastqs locally, or within cluster environments and elsewhere without having to track/combine files. Importantly, when duplicates are identified, `fqprofiler` keeps track of both locations, allowing you to identify and track the locations of duplicated files.
 
 ### Installation
 
+```
+Coming soon.
+```
 
 ### Setup
-
 
 1. Setup an account with google cloud.
 2. Authorize Google Cloud using the [gcloud SDK](https://cloud.google.com/sdk/):

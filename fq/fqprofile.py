@@ -28,6 +28,7 @@ import sys
 from datetime import datetime
 from math import log
 import re
+import time
 
 
 def get_item(kind, name):
@@ -35,10 +36,12 @@ def get_item(kind, name):
 
 
 def update_item(kind, name, **kwargs):
-    m = get_item(kind, name)
-    if m is None:
+    item = get_item(kind, name)
+    if item is None:
         m = datastore.Entity(key=ds.key(kind, name),
                              exclude_from_indexes=['Most_Abundant_Sequence'])
+    else:
+        m = item
     for key, value in kwargs.items():
         if type(value) == str:
             m[key] = unicode(value)
@@ -48,6 +51,13 @@ def update_item(kind, name, **kwargs):
             else:
                 m[key] = value
             m[key] = list(set(m[key]))
+        # If date created of file is earlier
+        elif key == 'date_created' and item:
+            vtimestamp = time.mktime(value.timetuple())
+            dstimestamp = time.mktime(m['date_created'].timetuple())
+            if vtimestamp < dstimestamp:
+                m[key] = value
+
         else:
             m[key] = value
     if 'fq_profile_count' in m:
@@ -224,7 +234,7 @@ def main():
     if error_fqs and len(fq_set) > 1:
         with indent(4):
             puts_err(colored.red("\nFastqs that errored:\n\n" +
-                 '\n'.join(error_fqs) + "\n"))
+                     '\n'.join(error_fqs) + "\n"))
 
 
 if __name__ == '__main__':
