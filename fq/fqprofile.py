@@ -5,6 +5,7 @@ usage:
     fq fetch <fq>...
     fq fastqc-dump <fastqc-group> [<fq>...]
     fq dump
+    fq summary
     fq set <project> <kind>
 
 options:
@@ -35,12 +36,14 @@ import re
 import time
 import glob
 from subprocess import Popen, PIPE
-from tempfile import gettempdir
+import tempfile
 import socket
+from collections import defaultdict
+import shutil
 
 
 def fastqc(filename):
-    t_dir = gettempdir()
+    t_dir = tempfile.mkdtemp(prefix=filename)
     basename = os.path.basename(filename)
     fastqc_results = basename.replace(".fq", "_fastqc") \
                              .replace(".fastq", "_fastqc") \
@@ -48,8 +51,11 @@ def fastqc(filename):
 
     comm = ["fastqc", "--out", t_dir, "--extract", filename]
     out, err = Popen(comm, stdout=PIPE, stderr=PIPE).communicate()
-    fqc_file = t_dir + "/" + fastqc_results + "_fastqc/fastqc_data.txt"
-    return parse_fastqc(fqc_file)
+    # Get folder within tempdir
+    fqc_file = glob.glob(os.path.join(t_dir, "*", "fastqc_data.txt"))[0]
+    results = parse_fastqc(fqc_file)
+    shutil.rmtree(t_dir)
+    return results
 
 
 def test_fastqc(filename):
@@ -217,6 +223,19 @@ def main():
                 del i[j]
             print(json.dumps(i, default=json_serial, indent=4, sort_keys=True))
         exit()
+
+    if args["summary"]:
+        fastq_dumped = query_item(kind)
+        cn = defaultdict(int)
+        for i in fastq_dumped:
+            cn['count'] += 1
+            cn['bases'] += i['bases']
+            cn['filesize'] += i['filesize']
+        fm = """FASTQ count: {count}\nBases: {bases}\nfilesize: {filesize}\n"""
+
+        print fm.format(count=cn['count'],
+                        bases=cn['bases'],
+                        filesize=file_size(cn['filesize']))
 
     if "*" in args["<fq>"] and len(args) == 1:
         fq_set = glob.glob(args["<fq>"])
