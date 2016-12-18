@@ -277,12 +277,6 @@ def main():
 
     if args["--fastqc"]:
         check_program_exists("fastqc")
-        if not all(fastqc_complient):
-            err_msg = "\n--fastqc only works with fq.gz, fastq.gz," + \
-                       " fq, and fastq extensions.\n"
-            with indent(4):
-                puts_err(colored.red(err_msg))
-                exit()
     if not all(fq_set_exists):
         missing_files = [f for f, exists in zip(fq_set, fq_set_exists)
                          if exists is False]
