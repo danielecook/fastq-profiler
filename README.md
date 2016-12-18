@@ -80,7 +80,7 @@ _For example:_
 
 `EA-CFB-2-421_S1_L001_R1_001.fastq.gz` would be parsed into:
 
-* `illumina_filename_sample` = EA-CFB-2-421U
+* `illumina_filename_sample` = EA-CFB-2-421
 * `illumina_filename_sample_number` = S1
 * `illumina_filename_lane` = L001
 * `illumina_filename_read` =  R1
