@@ -43,8 +43,8 @@ import shutil
 
 
 def fastqc(filename):
-    t_dir = tempfile.mkdtemp(prefix=filename)
     basename = os.path.basename(filename)
+    t_dir = tempfile.mkdtemp(prefix=basename)
     fastqc_results = basename.replace(".fq", "_fastqc") \
                              .replace(".fastq", "_fastqc") \
                              .replace("_fastqc.gz", "")
