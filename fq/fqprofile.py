@@ -213,7 +213,10 @@ def main():
     if args["dump"]:
         fastq_dumped = query_item(kind)
         for i in fastq_dumped:
+            for j in exclude_indices[1:]:
+                del i[j]
             print(json.dumps(i, default=json_serial, indent=4, sort_keys=True))
+        exit()
 
     if "*" in args["<fq>"] and len(args) == 1:
         fq_set = glob.glob(args["<fq>"])
@@ -286,6 +289,8 @@ def main():
         if args["fetch"]:
             d = get_item(kind, hash)
             if d:
+                for j in exclude_indices[1:]:
+                    del d[j]
                 print(json.dumps(d,
                                  default=json_serial,
                                  indent=4,
