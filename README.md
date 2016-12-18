@@ -33,50 +33,58 @@ __fastq-profiler__ generates a hash of every fastq submitted and uses it to trac
 
 The following pieces of information about fastqs (properties) are stored:
 
-1. `key` Hash of the file
-1. `filename` Fastq file name
-1. `path_filename` - Full path of Fastq file (in every location identified)
-1. `locations_count` - Count of identified locations.
-1. `date_created` Earliest identified date created
-1. `flowcell_lane` Flowcell lane
-1. `filesize` - Filesize in bytes
-1. `hfilesize` - Filesize in human readable form
-1. `total_reads` - Read count
-1. `[ATCGN]_count` - Base counts
-1. `GC_content` - GC content
-1. `min_length` - Minimum read length
-1. `avg_length` - Average read length
-1. `max_length` - maximum read length
+__Array Elements__
+
+The three properties below are stored as arrays. Elements within those arrays correspond with one another (e.g. [1,2] ~ [A,B])
+
+* `hostname` - Hostname
+* `basename` Fastq basename
+* `filename` - Absolute path of Fastq (in every location identified)
+
+__Singlular properties__
+
+* `key` Hash of the file
+* `locations_count` - Count of identified locations.
+* `date_created` Earliest identified date created
+* `flowcell_lane` Flowcell lane
+* `filesize` - Filesize in bytes
+* `hfilesize` - Filesize in human readable form
+* `total_reads` - Read count
+* `[ATCGN]_count` - Base counts
+* `GC_content` - GC content
+* `min_length` - Minimum read length
+* `avg_length` - Average read length
+* `max_length` - maximum read length
 
 __Additional fields included if applicable__
 
-1. `instrument` Instrument name if available
-1. `flowcell_lane` 
-1. `flowcell_number`
-1. `run_id`
-1. `pair` 1/2 for paired end sequencing.
-1. `barcode` Index/barcode of read for pooled sequencing
-1. `control_bits` 
+* `instrument` Instrument name if available
+* `flowcell_lane` 
+* `flowcell_number`
+* `run_id`
+* `pair` 1/2 for paired end sequencing.
+* `barcode` Index/barcode of read for pooled sequencing
+* `control_bits` 
 
 __Illumina Filename__
 
 If the filename follows the [Illumina filename conventions](http://support.illumina.com/content/dam/illumina-support/help/BaseSpaceHelp_v2/Content/Vault/Informatics/Sequencing_Analysis/BS/swSEQ_mBS_FASTQFiles.htm), these items will be parsed out as well:
 
-1. `illumina_filename_sample`
-1. `illumina_filename_barcode_sequence` OR `illumina_filename_sample_number`
-1. `illumina_filename_lane`
-1. `illumina_filename_read`
-1. `illumina_filename_set_number`
+* `illumina_filename_sample`
+* `illumina_filename_barcode_sequence` OR `illumina_filename_sample_number`
+* `illumina_filename_lane`
+* `illumina_filename_read`
+* `illumina_filename_set_number`
 
 _For example:_
 
 `EA-CFB-2-421_S1_L001_R1_001.fastq.gz` would be parsed into:
 
-1. `illumina_filename_sample` = EA-CFB-2-421U
-1. `illumina_filename_sample_number` = S1
-1. `illumina_filename_lane` = L001
-1. `illumina_filename_read` =  R1
-1. `illumina_filename_set_number` 1
+* `illumina_filename_sample` = EA-CFB-2-421U
+* `illumina_filename_sample_number` = S1
+* `illumina_filename_lane` = L001
+* `illumina_filename_read` =  R1
+* `illumina_filename_set_number` 1
 
 `fq profile` creates a .checksum file in every directory containing fastqs that it is run on. The `.checksum` file is used as a cache of file hashes to make retrieval of data easier and help with file tracking.
 
@@ -152,6 +160,8 @@ Once you have profiled fastqs, you can fetch data associated with them using the
 fq profile fetch myseq1.fq.gz myseq2.fq.gz
 ```
 
+The fetch command omits FastQC data tables stored in Datastore.
+
 __Output__
 
 Output is in JSON format.
@@ -201,7 +211,7 @@ Alternatively, you can dump fastq data stored that is stored in the `kind` you s
 fq dump
 ```
 
-The command above will dump all fastq data in JSON format.
+The command above will dump all fastq data in JSON format. Data tables saved by FastQC are ommited.
 
 #### Dump FastQC data
 
