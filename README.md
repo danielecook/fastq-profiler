@@ -168,38 +168,35 @@ Output is in JSON format.
 
 ```
 {
-    "A_count": 67669, 
-    "C_count": 44800, 
-    "GC_content": 0.3954977777777778, 
-    "G_count": 44187, 
-    "N_count": 4, 
-    "T_count": 68340, 
-    "avg_length": 90.0, 
-    "barcode": "CATCCGGA", 
-    "bases": 224996, 
-    "cum_length": 225000, 
-    "date_created": "2016-12-17T09:57:40+00:00", 
+    "A_count": 94645601,
+    "C_count": 59898634,
+    ...
+    "barcode": "GAATCTC",
+    "basename": [
+        "EA-B07_GAATCTC_L001_R2_001.fastq.gz"
+    ],
+    "bases": 309854148,
+    "basic_statistics": "pass",
+    "control_bits": 0,
+    "cum_length": 309858000,
+    "date_created": "2015-03-02T10:24:08+00:00",
+    ...
     "filename": [
-        "t_N2_CGC_130119_I861_FCC1GWRACXX_L6_CHKPEI13010003_2.fq.gz.fq.gz"
-    ], 
-    "filesize": 197839, 
-    "flowcell_lane": 6, 
-    "flowcell_number": 1101, 
-    "fq_profile_count": 5, 
-    "hfilesize": "193 KiB", 
-    "instrument": "@FCC1GWRACXX", 
-    "max_length": 90, 
-    "min_length": 90, 
-    "most_abundant_frequency": "7", 
-    "most_abundant_frequency_percent": "0.28", 
-    "most_abundant_sequence": "GCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAAGCCTAA", 
-    "pair": 2, 
-    "path_filename": [
-        "/Users/dancook/coding/git/fastq-profiler/test/t_N2_CGC_130119_I861_FCC1GWRACXX_L6_CHKPEI13010003_2.fq.gz.fq.gz"
-    ], 
-    "percent_unique": "99.4", 
-    "total_reads": "2500", 
-    "unique_reads": "2485"
+        "/Volumes/PortusTutus/Project_EA-DS/Sample_EA-B07/EA-B07_GAATCTC_L001_R2_001.fastq.gz"
+    ],
+    "filesize": 245108588,
+    "filtered": "N",
+    "flowcell_id": "HGMN3ADXX",
+    "flowcell_lane": 1,
+    "fq_profile_count": 1,
+    "hfilesize": "233 MiB",
+    "hostname": [
+        "dancook"
+    ],
+    ...
+    "sequence_length_distribution": "pass",
+    "total_reads": "3098580",
+    "unique_reads": "2002529"
 }
 ```
 
