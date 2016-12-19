@@ -125,4 +125,4 @@ fastqc_headers = {'per_base_sequence_quality': ["base",
                                       "illumina_small_rna_5_adapter",
                                       "nextera_transposase_sequence",
                                       "solid_small_rna_adapter"],
-                  'kmer_content': ['kasdf']}
+                  'kmer_content': ["sequence", "count", "pvalue", "obs_exp_max", "max_obs_exp_pos"]}
