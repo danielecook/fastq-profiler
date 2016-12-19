@@ -250,7 +250,7 @@ def main():
         bases = sum([x['bases'] for x in bases])
         filesize = list(query_item(kind, projection=['filesize']))
         filesize = sum([x['filesize'] for x in filesize])
-        fm = """FASTQ count: {count}\nBases: {bases}\nfilesize: {filesize}\n"""
+        fm = """FASTQ count: {count:,}\nBases: {bases:,}\nfilesize: {filesize}\n"""
 
         print fm.format(count=count,
                         bases=bases,
