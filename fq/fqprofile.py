@@ -327,13 +327,13 @@ def main():
 
 
         if args["fetch"]:
-            d = get_item(kind, hash)
-            if d:
+            i = get_item(kind, hash)
+            if i:
                 for j in exclude_indices[1:]:
                     if j in i:
                         del i[j]
                 i['md5sum'] = i.key.name
-                print(comma + json.dumps(d,
+                print(comma + json.dumps(i,
                                  default=json_serial,
                                  indent=4,
                                  sort_keys=True))
