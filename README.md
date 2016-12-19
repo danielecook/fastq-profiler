@@ -43,7 +43,7 @@ The three properties below are stored as arrays. Elements within those arrays co
 
 __Singlular properties__
 
-* `key` Hash of the file
+* `md5sum` Hash of the file
 * `locations_count` - Count of identified locations.
 * `date_created` Earliest identified date created
 * `flowcell_lane` Flowcell lane
