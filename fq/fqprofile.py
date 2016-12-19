@@ -13,7 +13,7 @@ options:
   --version                   Show version.
   --verbose                   Speak up
   --fastqc                    Gather fastqc statistics as well
-  --fastqc-threads            Additional threads to use for fastqc
+  --fastqc-threads=<threads>  Additional threads to use for fastqc
   --kv=<k:v>                  Additional key-value pairs to add
 
 """
@@ -209,7 +209,7 @@ def main():
 
     args = docopt(__doc__,
                   options_first=False)
-
+    
     # Save settings
     if args["set"]:
         settings = {"project": args["<project>"], "kind": args["<kind>"]}
@@ -224,7 +224,8 @@ def main():
     global verbose
     global threads
     verbose = args["--verbose"]
-    threads = args["--threads"]
+    threads = args["--fastqc-threads"]
+
     ds = datastore.Client(project=project)
 
     if args["dump"]:
