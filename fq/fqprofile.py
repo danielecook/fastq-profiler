@@ -13,6 +13,7 @@ options:
   --version                   Show version.
   --verbose                   Speak up
   --fastqc                    Gather fastqc statistics as well
+  --fastqc-threads            Additional threads to use for fastqc
   --kv=<k:v>                  Additional key-value pairs to add
 
 """
@@ -50,6 +51,9 @@ def fastqc(filename):
                              .replace("_fastqc.gz", "")
 
     comm = ["fastqc", "--out", t_dir, "--extract", filename]
+    if threads:
+        comm.insert(1,"--threads")
+        comm.insert(2,threads)
     out, err = Popen(comm, stdout=PIPE, stderr=PIPE).communicate()
     # Get folder within tempdir
     fqc_file = glob.glob(os.path.join(t_dir, "*", "fastqc_data.txt"))[0]
@@ -189,38 +193,46 @@ def file_size(size):
 
 
 def main():
-    args = docopt(__doc__,
-                  options_first=False)
-    ck = checksums()
-    settings_file = os.path.dirname(fqprofile.__file__) + "/.config"
-    # Save settings
-    if args["set"]:
-        settings = {"project": args["<project>"], "kind": args["<kind>"]}
-        open(settings_file, 'w').write(json.dumps(settings, indent=4))
-        puts_err("Saved Settings")
-        exit()
-    else:
-        if not os.path.exists(settings_file):
-            with indent(4):
-                exit(puts_err(colored.red("\nPlease set project and kind using 'fq set'\n")))
-        # Load settings
+
+    try:
+        settings_file = os.path.dirname(fqprofile.__file__) + "/.config"
         settings = json.loads(open(settings_file, 'r').read())
         project = settings['project']
         kind = settings['kind']
         output_str = "Project: {project} - Kind: {kind}".format(**locals())
         output_under = len(output_str) * "="
         puts_err(colored.blue("\n{output_str}\n{output_under}".format(**locals())))
+    except:
+        if not os.path.exists(settings_file):
+            with indent(4):
+                exit(puts_err(colored.red("\nPlease set project and kind using 'fq set'\n")))
+
+    args = docopt(__doc__,
+                  options_first=False)
+
+    # Save settings
+    if args["set"]:
+        settings = {"project": args["<project>"], "kind": args["<kind>"]}
+        open(settings_file, 'w').write(json.dumps(settings, indent=4))
+        puts_err("Saved Settings")
+        exit()
+
+    ck = checksums()
+    hostname = unicode(os.getlogin())
 
     global ds
     global verbose
+    global threads
     verbose = args["--verbose"]
+    threads = args["--threads"]
     ds = datastore.Client(project=project)
 
     if args["dump"]:
         fastq_dumped = query_item(kind)
         for i in fastq_dumped:
             for j in exclude_indices[1:]:
-                del i[j]
+                if j in i:
+                    del i[j]
             print(json.dumps(i, default=json_serial, indent=4, sort_keys=True))
         exit()
 
@@ -303,7 +315,8 @@ def main():
             d = get_item(kind, hash)
             if d:
                 for j in exclude_indices[1:]:
-                    del d[j]
+                    if j in i:
+                        del i[j]
                 print(json.dumps(d,
                                  default=json_serial,
                                  indent=4,
@@ -375,7 +388,7 @@ def main():
                     puts_err(colored.blue(basename + "\t[x] FastQC already run"))
 
         filename = os.path.abspath(fastq)
-        kwdata['hostname'] = [unicode(os.getlogin())]
+        kwdata['hostname'] = [hostname]
         kwdata['basename'] = [unicode(basename)]
         kwdata['filename'] = [unicode(filename)]
         update_item(kind,
