@@ -38,8 +38,6 @@ import time
 import glob
 from subprocess import Popen, PIPE
 import tempfile
-import socket
-from collections import defaultdict
 import shutil
 
 
@@ -131,10 +129,10 @@ def store_item(kind, name, **kwargs):
     ds.put(m)
 
 
-def query_item(kind, filters=None):
+def query_item(kind, filters=None, projection=()):
     # filters:
     # [("var_name", "=", 1)]
-    query = ds.query(kind=kind)
+    query = ds.query(kind=kind, projection = projection)
     if filters:
         for var, op, val in filters:
             query.add_filter(var, op, val)
@@ -247,17 +245,16 @@ def main():
         exit()
 
     if args["summary"]:
-        fastq_dumped = query_item(kind)
-        cn = defaultdict(int)
-        for i in fastq_dumped:
-            cn['count'] += 1
-            cn['bases'] += i['bases']
-            cn['filesize'] += i['filesize']
+        bases = list(query_item(kind, projection=['bases']))
+        count = len(bases)
+        bases = sum([x['bases'] for x in bases])
+        filesize = list(query_item(kind, projection=['filesize']))
+        filesize = sum([x['filesize'] for x in filesize])
         fm = """FASTQ count: {count}\nBases: {bases}\nfilesize: {filesize}\n"""
 
-        print fm.format(count=cn['count'],
-                        bases=cn['bases'],
-                        filesize=file_size(cn['filesize']))
+        print fm.format(count=count,
+                        bases=bases,
+                        filesize=file_size(filesize))
 
     if "*" in args["<fq>"] and len(args) == 1:
         fq_set = glob.glob(args["<fq>"])
