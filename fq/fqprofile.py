@@ -192,6 +192,7 @@ def file_size(size):
     return '{:.4g} {}'.format(size / (1 << (order * 10)), _suffixes[order])
 
 
+
 def main():
 
     try:
@@ -230,11 +231,16 @@ def main():
 
     if args["dump"]:
         fastq_dumped = query_item(kind)
+        print("[")
+        comma = ""
         for i in fastq_dumped:
             for j in exclude_indices[1:]:
                 if j in i:
                     del i[j]
-            print(json.dumps(i, default=json_serial, indent=4, sort_keys=True))
+            i['md5sum'] = i.key.name
+            print(comma + json.dumps(i, default=json_serial, indent=4, sort_keys=True))
+            comma = ","
+        print("]")
         exit()
 
     if args["summary"]:
@@ -300,6 +306,11 @@ def main():
 
 
     error_fqs = []
+
+    if args["fetch"]:
+        print("[")
+        comma = ""
+
     for fastq in fq_set:
         basename = os.path.basename(fastq)
         hash = ck.get_or_update_checksum(fastq)
@@ -318,10 +329,12 @@ def main():
                 for j in exclude_indices[1:]:
                     if j in i:
                         del i[j]
-                print(json.dumps(d,
+                i['md5sum'] = i.key.name
+                print(comma + json.dumps(d,
                                  default=json_serial,
                                  indent=4,
                                  sort_keys=True))
+                comma = ","
             else:
                 puts_err(colored.red("{basename} has not been profiled. Profile with 'fq profile'".format(basename=basename)))
             continue
@@ -401,6 +414,9 @@ def main():
         with indent(4):
             puts_err(colored.red("\nFastqs that errored:\n\n" +
                      '\n'.join(error_fqs) + "\n"))
+
+    if args["fetch"]:
+        print("]")
 
 
 if __name__ == '__main__':

@@ -270,6 +270,15 @@ Use `--fastqc-threads` to speed up fastqc.
 fq profile --fastqc --fastqc-threads 8 <fq>
 ```
 
+#### Reading data into R
+
+If you use `fq dump` or `fq fetch` you can import data into R using jsonlite:
+
+```
+library(jsonlite)
+fromJSON("out.json")
+```
+
 #### Additional Options
 
 __--kv=<k:v>__ can be used to store custom data. 
