@@ -56,6 +56,8 @@ def fastqc(filename):
         comm.insert(2,threads)
     out, err = Popen(comm, stdout=PIPE, stderr=PIPE).communicate()
     # Get folder within tempdir
+    if err:
+        return {"fastqc_error": err}
     fqc_file = glob.glob(os.path.join(t_dir, "*", "fastqc_data.txt"))[0]
     results = parse_fastqc(fqc_file)
     shutil.rmtree(t_dir)
@@ -396,6 +398,9 @@ def main():
                 if verbose:
                     puts_err(colored.blue(basename + "\t[ ] Running Fastqc"))
                 fqc_data = fastqc(fastq)
+                if 'fastqc_error' in fqc_data.keys():
+                    puts_err(colored.red(basename + "\tError running FastQC"))
+                    puts_err(colored.red(fqc_data['fastqc_error']))
                 kwdata.update(fqc_data)
             else:
                 if verbose:
