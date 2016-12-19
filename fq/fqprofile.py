@@ -83,7 +83,8 @@ exclude_indices = ['most_abundant_sequence',
                    'fastqc_sequence_duplication_levels_data',
                    'fastqc_overrepresented_sequences_data',
                    'fastqc_adapter_content_data',
-                   'fastqc_kmer_content_data']
+                   'fastqc_kmer_content_data',
+                   'fastqc_error']
 
 
 def update_item(kind, name, **kwargs):
