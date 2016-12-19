@@ -395,7 +395,9 @@ def main():
 
         # FASTQC
         if args["--fastqc"]:
-            if  nfq is None or u"fastqc_version" not in nfq.keys():
+            if 'fastqc_error' in nfq.keys():
+                puts_err(colored.blue(basename + "\t[x] FastQC run previously and errored"))
+            elif  nfq is None or u"fastqc_version" not in nfq.keys():
                 if verbose:
                     puts_err(colored.blue(basename + "\t[ ] Running Fastqc"))
                 fqc_data = fastqc(fastq)
