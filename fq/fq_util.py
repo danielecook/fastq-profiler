@@ -195,7 +195,9 @@ class fastq_reader:
         d["T_count"] = T
         d["C_count"] = C
         d["G_count"] = G
-        d["N_count"] = N 
+        d["N_count"] = N
+        d["total_reads"] = int(d["total_reads"])
+        d["unique_reads"] = int(d["unique_reads"])
         d["bases"] = A + T + C + G
         d["GC_content"] = (G + C) / float(cum_length)
         d["min_length"] = min_length
