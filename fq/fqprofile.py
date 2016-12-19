@@ -56,7 +56,7 @@ def fastqc(filename):
         comm.insert(2,threads)
     out, err = Popen(comm, stdout=PIPE, stderr=PIPE).communicate()
     # Get folder within tempdir
-    if err:
+    if 'Exception' in err:
         return {"fastqc_error": err}
     fqc_file = glob.glob(os.path.join(t_dir, "*", "fastqc_data.txt"))[0]
     results = parse_fastqc(fqc_file)
