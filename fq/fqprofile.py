@@ -55,7 +55,7 @@ def fastqc(filename):
     out, err = Popen(comm, stdout=PIPE, stderr=PIPE).communicate()
     # Get folder within tempdir
     if 'Exception' in err:
-        return {"fastqc_error": err}
+        return {"fastqc_error": err, "error" = ["fastqc_error"]}
     fqc_file = glob.glob(os.path.join(t_dir, "*", "fastqc_data.txt"))[0]
     results = parse_fastqc(fqc_file)
     shutil.rmtree(t_dir)

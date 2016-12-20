@@ -174,6 +174,7 @@ class fastq_reader:
         max_length = None
         cum_length = 0
         A, T, C, G, N = [0]*5
+        d = None # If errored do not return
         for n, line in enumerate(out.stdout):
             if line.startswith("#AWK"):
                 d = OrderedDict(zip(stat_header, line.strip().split(" ")[1:]))
@@ -190,18 +191,21 @@ class fastq_reader:
                     min_length = length
                 if length > max_length:
                     max_length = length
-        d["cum_length"] = cum_length  # Stat line at end + 1
-        d["A_count"] = A
-        d["T_count"] = T
-        d["C_count"] = C
-        d["G_count"] = G
-        d["N_count"] = N
-        d["total_reads"] = int(d["total_reads"])
-        d["unique_reads"] = int(d["unique_reads"])
-        d["bases"] = A + T + C + G
-        d["GC_content"] = (G + C) / float(cum_length)
-        d["min_length"] = min_length
-        d["avg_length"] = cum_length / float(d["total_reads"])
-        d["max_length"] = max_length
-        return d
+        if d:  
+            d["cum_length"] = cum_length  # Stat line at end + 1
+            d["A_count"] = A
+            d["T_count"] = T
+            d["C_count"] = C
+            d["G_count"] = G
+            d["N_count"] = N
+            d["total_reads"] = int(d["total_reads"])
+            d["unique_reads"] = int(d["unique_reads"])
+            d["bases"] = A + T + C + G
+            d["GC_content"] = (G + C) / float(cum_length)
+            d["min_length"] = min_length
+            d["avg_length"] = cum_length / float(d["total_reads"])
+            d["max_length"] = max_length
+            return d
+        else:
+            return {'error': ['error while parsing with awk']}
 
