@@ -55,7 +55,7 @@ def fastqc(filename):
     out, err = Popen(comm, stdout=PIPE, stderr=PIPE).communicate()
     # Get folder within tempdir
     if 'Exception' in err:
-        return {"fastqc_error": err, "error" = ["fastqc_error"]}
+        return {"fastqc_error": err, "error" : ["fastqc_error"]}
     fqc_file = glob.glob(os.path.join(t_dir, "*", "fastqc_data.txt"))[0]
     results = parse_fastqc(fqc_file)
     shutil.rmtree(t_dir)
@@ -191,7 +191,6 @@ _suffixes = ['bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
 def file_size(size):
     order = int(log(float(size), 2) / 10) if size else 0
     return '{:.4g} {}'.format(size / (1 << (order * 10)), _suffixes[order])
-
 
 
 def main():
