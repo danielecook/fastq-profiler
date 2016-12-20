@@ -1,8 +1,9 @@
 from datetime import datetime
 from clint.textui import colored, puts_err
 import os
+from dateutil.parser import parse
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 def boolify(s):
     if s == 'True':
@@ -18,6 +19,8 @@ def autoconvert(s):
             return fn(s)
         except ValueError:
             pass
+    if type(s) is str and s.startswith("date-"):
+        s = parse(s.replace("date-", ""))
     return s
 
 

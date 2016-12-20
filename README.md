@@ -152,6 +152,28 @@ __Read files from stdin__
 find . -name *.gz  | egrep "(fastq|fq)" - | fq profile - 
 ```
 
+#### Storing additional data with .description
+
+An alternative to `--kv` (below) for storing data specific to each sequencing run is to use a `.description` file. Create a `.description` file in the sequencing folder when you run `fq profile`, and it will be parsed and the data stored.
+
+The example below illustrates a `.description` file.
+
+```
+species: C. elegans
+source: ftp_site
+sequencing_center: UChicago
+seq_folder: 150406_D00422_0191_BHBDWCADXX-EA-CB12
+sequencing_type: DNA
+date_submitted: date-2015-03-05
+date_sequenced: date-2015-04-06
+lab: Andersen Lab
+description: DNA sequencing of new wild isolates!
+```
+
+##### Specifying Dates
+
+To specify dates use the `date-` prefix and use YYYY-MM-DD. For example, `date-2015-03-05`.
+
 #### Fetching fastq data
 
 Once you have profiled fastqs, you can fetch data associated with them using the `fetch` command:
@@ -283,9 +305,13 @@ fromJSON("out.json")
 
 __--kv=<k:v>__ can be used to store custom data. 
 
+Use the `date-` prefix to store a date. Other data types are automatically inferred. You can alternatively use a `.description` file. 
+
 ```
-fq profile --kv=date_sequenced:20160610 *.fq.gz
+fq profile --kv=date_sequenced:date-20160610,sequencing_center:UChicago *.fq.gz
 ```
+
+
 
 In the example above, a 'date_sequenced' property will be added to the fastq entity in google datastore.
 

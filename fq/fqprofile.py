@@ -316,6 +316,7 @@ def main():
 
     for fastq in fq_set:
         basename = os.path.basename(fastq)
+        dirname = os.path.dirname(os.path.abspath(fastq))
         hash = ck.get_or_update_checksum(fastq)
         fq = fastq_reader(fastq)
         if fq.error is True:
@@ -392,6 +393,16 @@ def main():
             kv = [x.split(":") for x in args['--kv'].split(",")]
             kv = {k: autoconvert(v) for k, v in kv}
             kwdata.update(kv)
+
+        # Detect .description  file:
+        description = dirname + "/.description"
+        if os.path.exists(description):
+            with indent(4):
+                puts_err("DETECTED description!")
+            desc = [x.split(":") for x in open(description, 'r').read().splitlines()]
+            for k,v in desc:
+                v = autoconvert(v.strip())
+                kwdata.update({k:v})
 
         # FASTQC
         if args["--fastqc"]:
