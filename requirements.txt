@@ -1,4 +1,4 @@
 gcloud
 docopt
 clint
-dateutil
+python-dateutil
