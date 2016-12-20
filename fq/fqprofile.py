@@ -194,9 +194,8 @@ def file_size(size):
 
 
 def main():
-
+    settings_file = os.path.dirname(fqprofile.__file__) + "/.config"
     try:
-        settings_file = os.path.dirname(fqprofile.__file__) + "/.config"
         settings = json.loads(open(settings_file, 'r').read())
         project = settings['project']
         kind = settings['kind']
@@ -204,10 +203,7 @@ def main():
         output_under = len(output_str) * "="
         puts_err(colored.blue("\n{output_str}\n{output_under}".format(**locals())))
     except:
-        if not os.path.exists(settings_file):
-            with indent(4):
-                exit(puts_err(colored.red("\nPlease set project and kind using 'fq set'\n")))
-
+        pass
     args = docopt(__doc__,
                   options_first=False)
     
@@ -215,8 +211,16 @@ def main():
     if args["set"]:
         settings = {"project": args["<project>"], "kind": args["<kind>"]}
         open(settings_file, 'w').write(json.dumps(settings, indent=4))
-        puts_err("Saved Settings")
+        project = args["<project>"]
+        kind = args["<kind>"]
+        output_str = "Project: {project} - Kind: {kind}".format(**locals())
+        puts_err(colored.blue("\n{output_str} - Saved Settings".format(**locals())))
         exit()
+
+    if not os.path.exists(settings_file):
+        with indent(4):
+            exit(puts_err(colored.red("\nPlease set project and kind using 'fq set'\n")))
+
 
     ck = checksums()
     hostname = unicode(os.getlogin())
