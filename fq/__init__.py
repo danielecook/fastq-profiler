@@ -2,6 +2,7 @@ from datetime import datetime
 from clint.textui import colored, puts_err
 import os
 
+__version__ = "0.0.2"
 
 def boolify(s):
     if s == 'True':

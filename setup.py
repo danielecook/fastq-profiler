@@ -1,10 +1,11 @@
 from setuptools import setup
 import glob
+from fq import __version__
 with open('requirements.txt') as f:
     required = f.read().splitlines()
 
 setup(name='fastq-profiler',
-      version='0.0.1',
+      version=__version__,
       packages=['fq'],
       description='Summarize fastq files and store associated data.',
       url='https://github.com/danielecook/fastq-profiler',
