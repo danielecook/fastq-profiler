@@ -1,9 +1,14 @@
+__version__ = "0.0.3"
 from datetime import datetime
 from clint.textui import colored, puts_err
 import os
-from dateutil.parser import parse
 
-__version__ = "0.0.3"
+try:
+    from dateutil.parser import parse
+except:
+    pass
+
+
 
 def boolify(s):
     if s == 'True':
