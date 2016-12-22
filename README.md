@@ -213,12 +213,12 @@ sample_002_R01.fq.gz	LIB3	Mostafa	C
 
 The table looks like this:
 
-| file|Library|prepared_by|dna_prep_kit|
-|:-----------------------------------|
-| sample_001_R01.fq.gz|LIB1|Robyn|A|
-| sample_001_R02.fq.gz|LIB2|Robyn|B|
-| sample_002_R01.fq.gz|LIB3|Mostafa|C|
-| …                                  |
+| #file	|Library	|prepared_by	|dna_prep_kit   |
+|:-----------------------------------------|
+| my001_fq_01.fq.gz	LIB1	|Robyn	|A           |
+| my002_fq_01.fq.gz	LIB2	|Robyn	|B           |
+| my003_fq_01.fq.gz	LIB3	|Mostafa	|C         |
+| …                                        |
 
 ##### Specifying Dates when storing data
 
