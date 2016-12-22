@@ -39,6 +39,7 @@ import glob
 from subprocess import Popen, PIPE
 import tempfile
 import shutil
+from fq import __version__
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -208,6 +209,7 @@ def main():
     except:
         pass
     args = docopt(__doc__,
+                  version=__version__,
                   options_first=False)
     
     # Save settings
