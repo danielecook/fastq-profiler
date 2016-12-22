@@ -39,6 +39,9 @@ import glob
 from subprocess import Popen, PIPE
 import tempfile
 import shutil
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 
 def fastqc(filename):
@@ -315,15 +318,16 @@ def main():
         comma = ""
 
     for fastq in fq_set:
-        basename = os.path.basename(fastq)
-        dirname = os.path.dirname(os.path.realpath(fastq))
+        fastq_realpath = os.path.realpath(fastq)
+        basename = os.path.basename(fastq_realpath)
+        dirname = os.path.dirname(fastq_realpath)
         hash = ck.get_or_update_checksum(fastq)
-        fq = fastq_reader(fastq)
+        fq = fastq_reader(fastq_realpath)
         if fq.error is True:
             error_fqs.append(fastq)
             with indent(4):
                 puts_err(colored.red("\nDoes not appear to be a Fastq: " +
-                     fastq + "\n"))
+                     fastq_realpath + "\n"))
             continue
 
 
@@ -423,7 +427,7 @@ def main():
         filename = os.path.realpath(fastq)
         kwdata['hostname'] = [hostname]
         kwdata['basename'] = [unicode(basename)]
-        kwdata['filename'] = [unicode(filename)]
+        kwdata['filename'] = [unicode(fastq_realpath)]
         update_item(kind,
                     hash,
                     **kwdata)
