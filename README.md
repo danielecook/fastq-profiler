@@ -7,7 +7,7 @@ I chose Google Datastore because it is centralized - allowing you to profile fas
 ### Installation
 
 ```
-pip install https://github.com/danielecook/fastq-profiler/archive/v0.0.3.tar.gz
+pip install https://github.com/danielecook/fastq-profiler/archive/v0.0.4.tar.gz
 ```
 
 ### Setup
