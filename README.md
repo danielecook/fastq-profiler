@@ -154,9 +154,9 @@ find . -name *.gz  | egrep "(fastq|fq)" - | fq profile -
 
 #### Storing Additional Data
 
-##### Using .description
+##### Using `.description`
 
-The `.description` file is intended to specify data that should be attahed to every fastq within a folder. `.description` files are located in the directory containing fastqs that will be processed. For example:
+The `.description` file is intended to specify data that should be attached to every fastq within a folder. `.description` files are located in the directory containing fastqs that will be processed. For example:
 
 ```
 ├── 20150505_fastq_files
@@ -184,7 +184,7 @@ description: DNA sequencing of new wild isolates!
 
 Every datastore entity corresponding to a fastq in the folder will have these data attached when you run `fq profile`. 
 
-##### Using .fqdata
+##### Using `.fqdata`
 
 If you want to store data specific to the fastq file, for the sequencing library or other properties, you can use a `.fqdata` file. The `.fqdata` file functions similar to the `description` file except that you must specify the fastq using its basename (e.g. /fq_set/myfastq.fq.gz would be myfastq.fq.gz) or md5sum hash.
 
