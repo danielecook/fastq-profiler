@@ -184,7 +184,7 @@ description: DNA sequencing of new wild isolates!
 
 Every datastore entity corresponding to a fastq in the folder will have these data attached when you run `fq profile`. 
 
-##### Using `.fqdata`
+##### Using .fqdata
 
 If you want to store data specific to the fastq file, for the sequencing library or other properties, you can use a `.fqdata` file. The `.fqdata` file functions similar to the `description` file except that you must specify the fastq using its basename (e.g. /fq_set/myfastq.fq.gz would be myfastq.fq.gz) or md5sum hash.
 
@@ -213,12 +213,13 @@ sample_002_R01.fq.gz	LIB3	Mostafa	C
 
 The table looks like this:
 
-| #file	|Library	|prepared_by	|dna_prep_kit   |
-|:-----------------------------------------|
-| my001_fq_01.fq.gz	LIB1	|Robyn	|A           |
-| my002_fq_01.fq.gz	LIB2	|Robyn	|B           |
-| my003_fq_01.fq.gz	LIB3	|Mostafa	|C         |
-| …                                        |
+| file                 | Library   | prepared_by   | dna_prep_kit   |
+|:---------------------|:----------|:--------------|:---------------|
+| sample_001_R01.fq.gz | LIB1      | Robyn         | A              |
+| sample_001_R02.fq.gz | LIB2      | Robyn         | B              |
+| sample_002_R01.fq.gz | LIB3      | Mostafa       | C              |
+| ... | ...      | ...       | ...              |
+
 
 ##### Specifying Dates when storing data
 
