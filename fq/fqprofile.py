@@ -317,6 +317,10 @@ def main():
         print("[")
         comma = ""
 
+    # Dictionary for .description and .fqdata files
+    dot_description = {}
+    dot_fqdata = {}
+
     for fastq in fq_set:
         fastq_realpath = os.path.realpath(fastq)
         basename = os.path.basename(fastq_realpath)
@@ -398,15 +402,54 @@ def main():
             kv = {k: autoconvert(v) for k, v in kv}
             kwdata.update(kv)
 
-        # Detect .description  file:
-        description = dirname + "/.description"
-        if os.path.exists(description):
-            with indent(4):
-                puts_err("DETECTED description!")
-            desc = [x.split(":") for x in open(description, 'r').read().splitlines()]
-            for k,v in desc:
-                v = autoconvert(v.strip())
-                kwdata.update({k:v})
+        # .description:
+        if dirname not in dot_description:
+            description_filename = dirname + "/.description"
+            # Cache Description data in dot_description.
+            if os.path.exists(description_filename):
+                try:
+                    with indent(4):
+                        puts_err(colored.blue("\nUsing .description file: " + description_filename + "\n"))
+                    desc = dict([x.strip().split(":",1) for x in open(description_filename, 'r').read().splitlines()])
+                    for k,v in desc.items():
+                        desc[k] = autoconvert(v.strip())
+                    dot_description[dirname] = desc
+                except:
+                    with indent(4):
+                        puts_err(colored.red("\nError with .description file:" + description_filename + "\n"))
+                    dot_description[dirname] = {}
+            else:
+                dot_description[dirname] = {}
+        kwdata.update(dot_description[dirname])
+
+
+        # .fqdata
+        if dirname not in dot_fqdata:
+            # Cache fqdata in dot_description.
+            fqdata_filename = dirname + "/.fqdata"
+            if os.path.exists(fqdata_filename):
+                try:
+                    fq_group = {}
+                    with indent(4):
+                        puts_err(colored.blue("\nUsing .fqdata: " + fqdata_filename + "\n"))
+                    fqdata = open(fqdata_filename, 'r').read().splitlines()
+                    header = fqdata[0].strip().split("\t")[1:]
+                    for line in fqdata[1:]:
+                        line = line.split("\t")
+                        values = [autoconvert(v.strip()) for v in line[1:] if v]
+                        fq_group[line[0]] = dict(zip(header, values))
+                    dot_fqdata[dirname] = fq_group
+                except:
+                    with indent(4):
+                        puts_err(colored.red("\nError with .fqdata file:" + fqdata_filename + "\n"))
+                    dot_fqdata[dirname] = {}                    
+            else:
+                dot_fqdata[dirname] = {}
+        if dirname in dot_fqdata:
+            if basename in dot_fqdata[dirname]:
+                kwdata.update(dot_fqdata[dirname][basename])
+            elif hash in dot_fqdata[dirname]:
+                kwdata.update(dot_fqdata[dirname][hash])
 
         # FASTQC
         if args["--fastqc"]:

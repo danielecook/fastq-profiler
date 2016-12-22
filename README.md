@@ -152,11 +152,23 @@ __Read files from stdin__
 find . -name *.gz  | egrep "(fastq|fq)" - | fq profile - 
 ```
 
-#### Storing additional data with .description
+#### Storing Additional Data
 
-An alternative to `--kv` (below) for storing data specific to each sequencing run is to use a `.description` file. Create a `.description` file in the sequencing folder when you run `fq profile`, and it will be parsed and the data stored.
+##### Using .description
 
-The example below illustrates a `.description` file.
+The `.description` file is intended to specify data that should be attahed to every fastq within a folder. `.description` files are located in the directory containing fastqs that will be processed. For example:
+
+```
+├── 20150505_fastq_files
+│   ├── .description
+│   ├── sample_001_R01.fq.gz
+│   ├── sample_001_R02.fq.gz
+|...|
+│   ├── sample_300_R01.fq.gz
+│   └── sample_300_R02.fq.gz
+```
+
+The format of the `description` file is key, value pairs separated by a `:`. For example:
 
 ```
 species: C. elegans
@@ -170,7 +182,45 @@ lab: Andersen Lab
 description: DNA sequencing of new wild isolates!
 ```
 
-##### Specifying Dates
+Every datastore entity corresponding to a fastq in the folder will have these data attached when you run `fq profile`. 
+
+##### Using .fqdata
+
+If you want to store data specific to the fastq file, for the sequencing library or other properties, you can use a `.fqdata` file. The `.fqdata` file functions similar to the `description` file except that you must specify the fastq using its basename (e.g. /fq_set/myfastq.fq.gz would be myfastq.fq.gz) or md5sum hash.
+
+By the way, you can use both `.description` and `.fqdata` files!
+
+```
+├── 20150505_fastq_files
+│   ├── .fqdata
+│   ├── .description
+│   ├── sample_001_R01.fq.gz
+│   ├── sample_001_R02.fq.gz
+|...|
+│   ├── sample_300_R01.fq.gz
+│   └── sample_300_R02.fq.gz
+```
+
+The `.fqdata` file is tab-separated. For example:
+
+```
+#file	Library prepared_by dna_prep_kit
+sample_001_R01.fq.gz	LIB1	Robyn	A
+sample_001_R02.fq.gz	LIB2	Robyn	B
+sample_002_R01.fq.gz	LIB3	Mostafa	C
+…           
+```
+
+The table looks like this:
+
+| file|Library|prepared_by|dna_prep_kit|
+|:-----------------------------------|
+| sample_001_R01.fq.gz|LIB1|Robyn|A|
+| sample_001_R02.fq.gz|LIB2|Robyn|B|
+| sample_002_R01.fq.gz|LIB3|Mostafa|C|
+| …                                  |
+
+##### Specifying Dates when storing data
 
 To specify dates use the `date-` prefix and use YYYY-MM-DD. For example, `date-2015-03-05`.
 
