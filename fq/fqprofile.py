@@ -157,7 +157,7 @@ class checksums:
         self.hashes = {}
 
     def get_or_update_checksum(self, filename):
-        filename = os.path.abspath(filename)
+        filename = os.path.realpath(filename)
         basename = os.path.basename(filename)
         base_dir = os.path.dirname(filename)
         checksum_file = base_dir + "/.checksum"
@@ -316,7 +316,7 @@ def main():
 
     for fastq in fq_set:
         basename = os.path.basename(fastq)
-        dirname = os.path.dirname(os.path.abspath(fastq))
+        dirname = os.path.dirname(os.path.realpath(fastq))
         hash = ck.get_or_update_checksum(fastq)
         fq = fastq_reader(fastq)
         if fq.error is True:
@@ -420,7 +420,7 @@ def main():
                 if verbose:
                     puts_err(colored.blue(basename + "\t[x] FastQC already run"))
 
-        filename = os.path.abspath(fastq)
+        filename = os.path.realpath(fastq)
         kwdata['hostname'] = [hostname]
         kwdata['basename'] = [unicode(basename)]
         kwdata['filename'] = [unicode(filename)]
