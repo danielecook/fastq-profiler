@@ -6,6 +6,7 @@ usage:
     fq fastqc-dump <fastqc-group> [<fq>...]
     fq dump
     fq summary
+    fq query <query>
     fq set <project> <kind>
 
 options:
@@ -212,7 +213,7 @@ def main():
     args = docopt(__doc__,
                   version=__version__,
                   options_first=False)
-    
+
     # Save settings
     if args["set"]:
         settings = {"project": args["<project>"], "kind": args["<kind>"]}
@@ -239,8 +240,26 @@ def main():
 
     ds = datastore.Client(project=project)
 
-    if args["dump"]:
-        fastq_dumped = query_item(kind)
+    if args["query"] or args["dump"]:
+        if args["query"]:
+            filter_set = []
+            try:
+                for q in args["<query>"].split(","):
+                    m = re.match(r"([^=<>]+)(=|>|<|!=|>=|<=)([^,]+)", q)
+                    new_query = [m.group(1).strip("'\" "), m.group(2), m.group(3).strip("'\" ")]
+                    new_query = map(autoconvert, new_query)
+                    filter_set.append(new_query)
+            except:
+                with indent(4):
+                    exit(puts_err(colored.red("\nError with query\n")))
+            with indent(4):
+                puts_err("\nFilters:")
+                for i in filter_set:
+                    puts_err(colored.blue(str(i)))
+                puts_err("\n")
+            fastq_dumped = query_item('fastq', filters = filter_set)
+        elif args["dump"]:
+            fastq_dumped = query_item(kind)
         print("[")
         comma = ""
         for i in fastq_dumped:
