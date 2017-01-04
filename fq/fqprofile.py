@@ -113,7 +113,8 @@ def update_item(kind, name, **kwargs):
             dstimestamp = time.mktime(m['date_created'].timetuple())
             if vtimestamp < dstimestamp:
                 m[key] = value
-
+        elif not value and key in m:
+            del m[key]
         else:
             m[key] = value
     if 'fq_profile_count' in m:
