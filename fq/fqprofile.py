@@ -99,7 +99,9 @@ def update_item(kind, name, **kwargs):
                              exclude_from_indexes=exclude_indices)
         m.update(dict(item))
     for key, value in kwargs.items():
-        if type(value) == str:
+        if not value and key in m:
+            del m[key]
+        elif type(value) == str:
             m[key] = unicode(value)
         elif type(value) == list:
             if key in m:
@@ -113,8 +115,6 @@ def update_item(kind, name, **kwargs):
             dstimestamp = time.mktime(m['date_created'].timetuple())
             if vtimestamp < dstimestamp:
                 m[key] = value
-        elif not value and key in m:
-            del m[key]
         else:
             m[key] = value
     if 'fq_profile_count' in m:
