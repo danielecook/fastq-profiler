@@ -439,7 +439,7 @@ def main():
                     header = fqdata[0].strip().split("\t")[1:]
                     for line in fqdata[1:]:
                         line = line.split("\t")
-                        values = [autoconvert(v.strip()) for v in line[1:] if v]
+                        values = [autoconvert(v.strip()) for v in line[1:]]
                         fq_group[line[0]] = dict(zip(header, values))
                     dot_fqdata[dirname] = fq_group
                 except:
